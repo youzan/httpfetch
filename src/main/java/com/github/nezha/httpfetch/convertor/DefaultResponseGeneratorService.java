@@ -2,12 +2,15 @@ package com.github.nezha.httpfetch.convertor;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.github.nezha.httpfetch.HttpApiMethodWrapper;
+import com.github.nezha.httpfetch.HttpApiRequestParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 
@@ -22,11 +25,12 @@ public class DefaultResponseGeneratorService implements ResponseGeneratorConvert
     private final static Logger LOGGER = LoggerFactory.getLogger(DefaultResponseGeneratorService.class);
 
     @Override
-    public Object generate(Method method, HttpApiMethodWrapper wrapper, byte[] response, Class<?> responseCls) {
+    public Object generate(Method method, HttpApiMethodWrapper wrapper, HttpApiRequestParam requestParam, byte[] response, Class<?> responseCls) {
         Class<?> returnType = method.getReturnType();
         String value = null;
         try {
             value = new String(response, "UTF-8");
+            LOGGER.debug("请求结果!", "value", value);
             if(returnType.isPrimitive()){
                 //简单类型转换
                 if(Boolean.class.isAssignableFrom(returnType)){
@@ -69,17 +73,29 @@ public class DefaultResponseGeneratorService implements ResponseGeneratorConvert
             }else if(Map.class.isAssignableFrom(returnType)){
                 return JSONObject.parseObject(value);
             }else{
-                return JSONObject.parseObject(value, returnType);
+                return JSONObject.parseObject(value, new DspResponseTypeReference(method.getGenericReturnType()));
             }
         } catch (Exception e) {
-            LOGGER.error("读取请求结果时出错！ value [{}]", value, e);
-            throw new RuntimeException("读取请求结果时出错！", e);
+            String msg = "读取请求结果时出错！";
+            LOGGER.error(msg+" value [{}]", value, e);
+            throw new RuntimeException(msg, e);
         }
     }
 
     @Override
-    public boolean supports(Method method, HttpApiMethodWrapper wrapper, Class<?> responseCls) {
+    public boolean supports(Method method, HttpApiMethodWrapper wrapper, HttpApiRequestParam requestParam, Class<?> responseCls) {
         return true;
     }
 
+    public static class DspResponseTypeReference<T> extends TypeReference<T> {
+        private Type type;
+
+        public DspResponseTypeReference(Type type){
+            this.type = type;
+        }
+
+        public Type getType() {
+            return this.type;
+        }
+    }
 }

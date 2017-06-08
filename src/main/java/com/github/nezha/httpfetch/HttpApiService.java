@@ -11,10 +11,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,30 +27,32 @@ public class HttpApiService {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(HttpApiService.class);
 
-    private static HttpApiServiceWrapper serviceWrapper = null;
+    private HttpApiServiceWrapper serviceWrapper = new HttpApiServiceWrapper();
 
-    private final static Map<Method, HttpApiMethodWrapper> methodsCache = new HashMap<Method, HttpApiMethodWrapper>();
+    private List<SourceReader> sourceReaders;
 
-    private final static Map<Class<?>, Object> serviceCache = new ConcurrentHashMap<>();
+    private Map<Method, HttpApiMethodWrapper> methodsCache = new HashMap<>();
 
-    static {
+    private Map<Class<?>, Object> serviceCache = new ConcurrentHashMap<>();
 
-        serviceWrapper = new HttpApiServiceWrapper();
+    @PostConstruct
+    public void init(){
+        if(!CommonUtils.isCollectionEmpty(sourceReaders)){
+            for(SourceReader sourceReader : sourceReaders){
+                serviceWrapper.addReader(sourceReader);
+            }
+        }
 
-        XmlReader xmlReader = new XmlReader();
-        xmlReader.read("httpapi.xml");
-
-        serviceWrapper.addReader(xmlReader);
         serviceWrapper.init();
     }
 
-    public static <T> T getOrCreateService(Class<T> serviceCls){
+    public <T> T getOrCreateService(Class<T> serviceCls){
         Object service;
         if(!serviceCache.containsKey(serviceCls)){
             try {
                 service = createService(serviceCls);
             } catch (Exception e) {
-                String msg = String.format("服务创建失败! serviceCls [%s]", serviceCls);
+                String msg = String.format("服务创建失败! serviceCls ["+serviceCls+"]");
                 LOGGER.error(msg, e);
                 throw new RuntimeException(msg);
             }
@@ -68,7 +72,7 @@ public class HttpApiService {
      * @throws InstantiationException
      * @throws IllegalAccessException
      */
-    private static Object createService(final Class<?> serviceCls) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    private Object createService(final Class<?> serviceCls) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         ProxyFactory factory = new ProxyFactory();
         if(serviceCls.isInterface()){
             factory.setInterfaces(new Class[] {serviceCls});
@@ -80,7 +84,7 @@ public class HttpApiService {
         return factory.create(null, null, new HttpApiMethodHandler(serviceCls));
     }
 
-    static class HttpApiMethodHandler implements MethodHandler {
+    class HttpApiMethodHandler implements MethodHandler {
 
         private Class<?> serviceCls;
 
@@ -102,7 +106,6 @@ public class HttpApiService {
                 wrapper = new HttpApiMethodWrapper();
                 wrapper.setMethod(httpApiAnno.method());
                 wrapper.setReturnCls(method.getReturnType());
-                wrapper.setResponseCls(httpApiAnno.responseCls());
                 wrapper.setAnnotations(method.getAnnotations());
                 wrapper.setEncoding(httpApiAnno.encoding());
 
@@ -121,8 +124,7 @@ public class HttpApiService {
                 ResponseGeneratorConvertor generatorService = null;
                 if (StringUtils.isNotEmpty(httpApiAnno.generator())) {
                     for (ResponseGeneratorConvertor handler : serviceWrapper.getHandlers()) {
-                        if (httpApiAnno.generator().equals(
-                                handler.getClass().getSimpleName())) {
+                        if (httpApiAnno instanceof ResponseGeneratorConvertor){
                             generatorService = handler;
                             break;
                         }
@@ -145,48 +147,45 @@ public class HttpApiService {
             }
 
             //封装成请求参数
-            HttpApiRequestParam param = new HttpApiRequestParam(wrapper.getUrl());
+            HttpApiRequestParam requestParam = new HttpApiRequestParam(wrapper.getUrl());
 
             //设置该函数默认encoding
-            param.setEncoding(wrapper.getEncoding());
+            requestParam.setEncoding(wrapper.getEncoding());
 
-            executePreHandler(wrapper, args, param);
+            executePreHandler(wrapper, args, requestParam);
 
-            generateParameter(wrapper, args, param);
+            generateParameter(wrapper, args, requestParam);
 
             //取header
-            Map<String, String> headers;
-            if(param.getHeaders().isEmpty()){
-                headers = wrapper.getHeaders();
-            }else {
-                headers = new HashMap<>(wrapper.getHeaders());
-                headers.putAll(param.getHeaders());
-            }
+            requestParam.addHeaders(wrapper.getHeaders());
 
             byte[] responseBytes = null;
             try{
-                executePreRequest(wrapper, args, param);
+                executePreRequest(wrapper, args, requestParam);
+                if(LOGGER.isInfoEnabled()){
+                    LOGGER.info("requestParam:"+ JSON.toJSONString(requestParam));
+                }
                 if ("POST".equals(wrapper.getMethod())) {
-                    responseBytes = HttpUtil.post(param.getUrl(), param.getParam(), param.getFileParam(),
-                            param.getRequestBody(), headers, param.getEncoding(),
+                    responseBytes = HttpUtil.post(requestParam.getUrl(), requestParam.getGetParam(), requestParam.getPostParam(), requestParam.getFormParam(),
+                            requestParam.getRequestBody(), requestParam.getHeaders(), requestParam.getEncoding(),
                             wrapper.getTimeout(), wrapper.getReadTimeout());
                 } else {
-                    responseBytes = HttpUtil.get(param.getUrl(), param.getParam(), headers, wrapper.getTimeout(), wrapper.getReadTimeout());
+                    responseBytes = HttpUtil.get(requestParam.getUrl(), requestParam.getGetParam(), requestParam.getHeaders(), wrapper.getTimeout(), wrapper.getReadTimeout());
                 }
 
                 //请求后置处理
-                responseBytes = executeAfterRequest(wrapper, args, param, responseBytes);
+                responseBytes = executeAfterRequest(wrapper, args, requestParam, responseBytes);
 
                 //查询实现类
-                Object response = generateResponse(method, responseBytes, wrapper);
+                Object response = generateResponse(method, responseBytes, requestParam, wrapper);
                 response = wrapper.getReturnCls().cast(response);
 
                 //返回结果前处理
-                response = executeBeforeReturn(wrapper, args, param, response);
+                response = executeBeforeReturn(wrapper, args, requestParam, response);
                 return response;
             }catch (Exception e){
-                LOGGER.error("请求调用时发生异常! method [{}] param [{}]", method, JSON.toJSONString(param), e);
-                Object response = executeCatchError(wrapper, args, param, responseBytes, e);
+                LOGGER.error("请求调用时发生异常! method [{}] requestParam [{}]", method, JSON.toJSONString(requestParam), e);
+                Object response = executeCatchError(wrapper, args, requestParam, responseBytes, e);
                 if(response == null){
                     //meiyou,抛出异常
                     throw e;
@@ -199,9 +198,9 @@ public class HttpApiService {
 
         private Map<String, String> getHeaders(HttpApi anno){
             Map<String, String> headers = new HashMap<>();
-            Header[] headersAnno = anno.headers();
+            HttpApiHeader[] headersAnno = anno.headers();
             if(ArrayUtils.isNotEmpty(headersAnno)){
-                for(Header header : headersAnno){
+                for(HttpApiHeader header : headersAnno){
                     if(header != null){
                         headers.put(header.key(), header.value());
                     }
@@ -225,10 +224,10 @@ public class HttpApiService {
             for(int i=0;i<annotationArray.length;i++){
                 //校验里面是否有param注解
                 Annotation[] annotations = annotationArray[i];
-                Param param = null;
+                HttpApiParam param = null;
                 for(Annotation annotation : annotations){
-                    if(Param.class.isAssignableFrom(annotation.annotationType())){
-                        param = (Param) annotation;
+                    if(HttpApiParam.class.isAssignableFrom(annotation.annotationType())){
+                        param = (HttpApiParam) annotation;
                         break;
                     }
                 }
@@ -305,7 +304,7 @@ public class HttpApiService {
          * @return
          */
         private byte[] executeAfterRequest(HttpApiMethodWrapper wrapper, Object[] args,
-                                         HttpApiRequestParam param, byte[] responseBytes) {
+                                           HttpApiRequestParam param, byte[] responseBytes) {
             if(!CommonUtils.isCollectionEmpty(serviceWrapper.getInterceptors())){
                 for (HttpApiInterceptor interceptor: serviceWrapper.getInterceptors()) {
                     if(interceptor != null){
@@ -324,11 +323,11 @@ public class HttpApiService {
          * @param response
          */
         private Object executeBeforeReturn(HttpApiMethodWrapper wrapper, Object[] args,
-                                         HttpApiRequestParam param, Object response) {
+                                           HttpApiRequestParam param, Object response) {
             if(!CommonUtils.isCollectionEmpty(serviceWrapper.getInterceptors())){
                 for (HttpApiInterceptor interceptor: serviceWrapper.getInterceptors()) {
                     if(interceptor != null){
-                        response = interceptor.beforeReturn(param, wrapper, args, response);
+                        response = interceptor.afterGenerateResponse(param, wrapper, args, response);
                     }
                 }
             }
@@ -343,7 +342,7 @@ public class HttpApiService {
          * @return 捕捉异常后的返回值
          */
         private Object executeCatchError(HttpApiMethodWrapper wrapper, Object[] args,
-                                       HttpApiRequestParam param, byte[] responseBytes, Exception ex) {
+                                         HttpApiRequestParam param, byte[] responseBytes, Exception ex) {
             if(!CommonUtils.isCollectionEmpty(serviceWrapper.getInterceptors())){
                 for (HttpApiInterceptor interceptor: serviceWrapper.getInterceptors()) {
                     if(interceptor != null){
@@ -390,16 +389,16 @@ public class HttpApiService {
             }
         }
 
-        private Object generateResponse(Method method, byte[] response, HttpApiMethodWrapper wrapper){
+        private Object generateResponse(Method method, byte[] response, HttpApiRequestParam requestParam, HttpApiMethodWrapper wrapper){
             ResponseGeneratorConvertor service = wrapper.getGeneratorService();
             Class<?> responseCls = wrapper.getResponseCls();
             if(service != null){
-                return wrapper.getGeneratorService().generate(method, wrapper, response, responseCls);
+                return wrapper.getGeneratorService().generate(method, wrapper, requestParam, response, responseCls);
             }else{
                 if(serviceWrapper.getHandlers() != null){
                     for(ResponseGeneratorConvertor generatorService : serviceWrapper.getHandlers()){
-                        if(generatorService != null && generatorService.supports(method, wrapper, responseCls)){
-                            return generatorService.generate(method, wrapper, response, responseCls);
+                        if(generatorService != null && generatorService.supports(method, wrapper, requestParam, responseCls)){
+                            return generatorService.generate(method, wrapper, requestParam, response, responseCls);
                         }
                     }
                 }
@@ -410,6 +409,10 @@ public class HttpApiService {
 
         private String getUrl(Class<?> serviceCls, Method method){
             HttpApi httpApi = method.getAnnotation(HttpApi.class);
+            if(StringUtils.isNotEmpty(httpApi.url())){
+                //如果注解中已经写明了url,则直接取 注解的url
+                return httpApi.url();
+            }
             String code = httpApi.operateCode();
             if(StringUtils.isEmpty(code)){
                 //如果为空，则使用默认的操作码
@@ -438,5 +441,14 @@ public class HttpApiService {
             chars[0] = Character.toLowerCase(chars[0]);
             return new String(chars);
         }
+    }
+
+
+    public List<SourceReader> getSourceReaders() {
+        return sourceReaders;
+    }
+
+    public void setSourceReaders(List<SourceReader> sourceReaders) {
+        this.sourceReaders = sourceReaders;
     }
 }

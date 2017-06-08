@@ -2,6 +2,7 @@ package com.github.nezha.httpfetch.resolver;
 
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.annotation.JSONField;
+import com.github.nezha.httpfetch.CommonUtils;
 import com.github.nezha.httpfetch.HttpApiMethodWrapper;
 import com.github.nezha.httpfetch.HttpApiRequestParam;
 import com.github.nezha.httpfetch.MethodParameter;
@@ -10,11 +11,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 将简单bean转换成http参数的Resolver,仅处理bean中第一层的变量
@@ -25,9 +24,9 @@ public class BeanMethodParameterResolver implements MethodParameterResolver {
 	
 	private final static Logger LOGGER = LoggerFactory.getLogger(BeanMethodParameterResolver.class);
 
-	private Map<Class<?>, List<String>> beanGetterNamesCache = new HashMap<Class<?>, List<String>>();
+	private Map<Class<?>, List<Field>> beanGetterNamesCache = new HashMap<>();
 
-	private Map<Class<?>, List<String>> paramNamesCache = new HashMap<Class<?>, List<String>>();
+	private Map<Class<?>, List<String>> paramNamesCache = new HashMap<>();
 	
 	@Override
 	public boolean supperts(HttpApiMethodWrapper wrapper, MethodParameter parameter) {
@@ -40,14 +39,16 @@ public class BeanMethodParameterResolver implements MethodParameterResolver {
 			Object arg) {
 		//将bean转换成map
 		Class<?> cls = arg.getClass();
-		List<String> getterNames;
+		List<Field> getterFields;
 		List<String> paramNames;
 		if(!beanGetterNamesCache.containsKey(cls)){
-	        getterNames = new ArrayList<>();
+	        getterFields = new ArrayList<>();
 			paramNames = new ArrayList<>();
-			Field[] fields = cls.getDeclaredFields();
-			for (int i = 0; i < fields.length; i++) {
-				String name = fields[i].getName();
+			Set<Field> fields = CommonUtils.getAllFieldWithSuper(cls);
+			Iterator<Field> fieldIterator = fields.iterator();
+			while(fieldIterator.hasNext()){
+				Field field = fieldIterator.next();
+				String name = field.getName();
 				if ("class".equals(name)) {
 					continue;
 				}
@@ -55,38 +56,62 @@ public class BeanMethodParameterResolver implements MethodParameterResolver {
 				if (PropertyUtils.isReadable(arg, name)) {
 					//取param name
 					//TODO 后期如果可以的话转成Param
-					JSONField jsonField = fields[i].getAnnotation(JSONField.class);
+					JSONField jsonField = field.getAnnotation(JSONField.class);
 					if(jsonField != null && StringUtils.isNotEmpty(jsonField.name())){
 						paramNames.add(jsonField.name());
 					}else{
 						paramNames.add(name);
 					}
 					//取getter
-					getterNames.add(name);
+					getterFields.add(field);
 				}
 			}
-	        beanGetterNamesCache.put(cls, getterNames);
+	        beanGetterNamesCache.put(cls, getterFields);
 			paramNamesCache.put(cls, paramNames);
 		}else{
-			getterNames = beanGetterNamesCache.get(cls);
+			getterFields = beanGetterNamesCache.get(cls);
 			paramNames = paramNamesCache.get(cls);
 		}
-		if(getterNames != null){
-			for (int i = 0; i < getterNames.size(); i++) {
-				String name = getterNames.get(i);
+		if(getterFields != null){
+			for (int i = 0; i < getterFields.size(); i++) {
+				Field field = getterFields.get(i);
+				String name = field.getName();
 				try {
 					String paramName = paramNames.get(i);
 					Object value = PropertyUtils.getSimpleProperty(arg, name);
 					if(value != null){
 						Class<?> parameterCls = value.getClass();
-						if(String.class.isAssignableFrom(parameterCls)){
-							param.addParam(paramName, value.toString());
-						}else if(isPrimitive(parameterCls)){
-							param.addParam(paramName, String.valueOf(value));
-						}else if(parameterCls.isEnum()){
-							param.addParam(paramName, value.toString());
+
+						if(field.getAnnotation(ArrayParam.class) != null && Collection.class.isAssignableFrom(parameterCls)){
+							//数组
+							StringBuffer url = new StringBuffer(param.getUrl());
+							if(param.getUrl().indexOf("?") < 0 ){
+								url.append("?");
+							}
+							Collection collection = (Collection)value;
+							for(Object e : collection){
+								if(e != null){
+									url.append("&");
+									url.append(paramName);
+									url.append("[]=");
+									url.append(this.parseParameter(e));
+								}
+							}
+							param.setUrl(url.toString());
 						}else{
-							param.addParam(paramName, JSONObject.toJSONString(value));
+							PostParam postParam = methodParameter.getAnnotation(PostParam.class);
+							FormParam formParam = methodParameter.getAnnotation(FormParam.class);
+							if(formParam != null){
+								if(value instanceof File){
+									param.addFormParam(paramName, value);
+								} else {
+									param.addFormParam(paramName, this.parseParameter(value));
+								}
+							} else if(postParam != null){
+								param.addPostParam(paramName, this.parseParameter(value));
+							}else{
+								param.addGetParam(paramName, this.parseParameter(value));
+							}
 						}
 					}
 				} catch (Exception e) {
@@ -96,31 +121,17 @@ public class BeanMethodParameterResolver implements MethodParameterResolver {
 		}
 	}
 
-	/**
-	 * 校验是否简单类型
-	 *
-	 * @param clazz
-	 * @return
-	 */
-	public boolean isPrimitive(Class<?> clazz) {
-		if (clazz == null) {
-			throw new IllegalArgumentException("参数有误!");
+	private String parseParameter(Object value){
+		Class parameterCls = value.getClass();
+		if(String.class.isAssignableFrom(parameterCls)){
+			return value.toString();
+		}else if(CommonUtils.isPrimitive(parameterCls)){
+			return String.valueOf(value);
+		}else if(parameterCls.isEnum()){
+			return value.toString();
+		}else {
+			return JSONObject.toJSONString(value);
 		}
-		if (clazz.isPrimitive()) {
-			return true;
-		}
-		if (clazz == Boolean.class
-				|| clazz == Character.class
-				|| clazz == Byte.class
-				|| clazz == Short.class
-				|| clazz == Integer.class
-				|| clazz == Long.class
-				|| clazz == Float.class
-				|| clazz == Double.class
-				|| clazz == Void.class
-				) {
-			return true;
-		}
-		return false;
 	}
+	
 }

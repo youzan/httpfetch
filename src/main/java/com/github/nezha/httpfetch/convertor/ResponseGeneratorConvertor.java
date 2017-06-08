@@ -2,6 +2,7 @@ package com.github.nezha.httpfetch.convertor;
 
 
 import com.github.nezha.httpfetch.HttpApiMethodWrapper;
+import com.github.nezha.httpfetch.HttpApiRequestParam;
 
 import java.lang.reflect.Method;
 
@@ -12,9 +13,9 @@ import java.lang.reflect.Method;
  *
  */
 public interface ResponseGeneratorConvertor {
-	
-	boolean supports(Method method, HttpApiMethodWrapper wrapper, Class<?> responseCls);
-	
-	Object generate(Method method, HttpApiMethodWrapper wrapper, byte[] response, Class<?> responseCls);
-	
+
+	boolean supports(Method method, HttpApiMethodWrapper wrapper, HttpApiRequestParam param, Class<?> responseCls);
+
+	Object generate(Method method, HttpApiMethodWrapper wrapper, HttpApiRequestParam param, byte[] response, Class<?> responseCls);
+
 }

@@ -1,8 +1,10 @@
 package com.github.nezha.httpfetch;
 
-import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
-import com.github.nezha.httpfetch.interceptor.HttpApiInterceptor;
-import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
+import com.alibaba.dubbo.common.utils.CollectionUtils;
+import com.youzan.bigdata.dspadapter.util.exception.AppException;
+import com.youzan.bigdata.dspadapter.util.httpapi.handler.ResponseGeneratorHandler;
+import com.youzan.bigdata.dspadapter.util.httpapi.interceptor.HttpApiInterceptor;
+import com.youzan.bigdata.dspadapter.util.httpapi.resolver.MethodParameterResolver;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -39,65 +41,80 @@ public class XmlReader implements SourceReader {
     /**
      * 拦截器
      */
-    private List<HttpApiInterceptor> interceptors = new ArrayList<HttpApiInterceptor>();
+    private List<HttpApiInterceptor> interceptors = new ArrayList<>();
 
 
     /**
      * 结果集处理类，如果需要不同的结果转换时，可以继承并注册
      */
-    private List<ResponseGeneratorConvertor> handlers = new ArrayList<ResponseGeneratorConvertor>();
+    private List<ResponseGeneratorHandler> handlers = new ArrayList<>();
     /**
      * 入参处理类，如果需要扩展参数的转换方式时可以继承并注册
      */
-    private List<MethodParameterResolver> parameterResolvers = new ArrayList<MethodParameterResolver>();
+    private List<MethodParameterResolver> parameterResolvers = new ArrayList<>();
 
-    private Map<String, String > urlAlias = new HashMap<String, String>();
+    private Map<String, String > urlAlias = new HashMap<>();
 
-    public void read(String path){
+    private List<String> paths;
 
-        InputStream is = null;
-        Document document = null;
+    public void init(){
+        if(!CollectionUtils.isEmpty(paths)){
+            paths.forEach(e -> {
+                this.read(e);
+            });
+        }
+    }
+
+    private void read(String path){
+
+        InputStream is;
+        Document document;
+        Element root =null;
         try {
             is = this.getClass().getClassLoader().getResourceAsStream(path);
             SAXReader saxReader = new SAXReader();
             document = saxReader.read(is);
+            if (null!=document){
+                root = document.getRootElement();
+            }
         } catch (Exception e) {
             LOGGER.error("读取api框架配置信息出错! path [{}]", path, e);
         }
 
-        Element root = document.getRootElement();
+        if (null!=root){
+            try{
+                this.parseInterceptos(root);
+            }catch (Exception e){
+                String msg = "解析请求拦截器集合时出错!";
+                LOGGER.error(msg, e);
+                throw new AppException(msg, e);
+            }
 
-        try{
-            this.parseInterceptos(root);
-        }catch (Exception e){
-            String msg = "解析请求拦截器集合时出错!";
-            LOGGER.error(msg, e);
-            throw new RuntimeException(msg, e);
+            try{
+                this.parseArgumentResolvers(root);
+            }catch (Exception e){
+                String msg = "解析参数处理类集合时出错!";
+                LOGGER.error(msg, e);
+                throw new AppException(msg, e);
+            }
+
+            try{
+                this.parseReturnHandlers(root);
+            }catch (Exception e){
+                String msg = "解析结果处理类集合时出错!";
+                LOGGER.error(msg, e);
+                throw new AppException(msg, e);
+            }
+
+            try{
+                this.parseUrlAlias(root);
+            }catch (Exception e) {
+                String msg = "解析url别名集合时出错!";
+                LOGGER.error(msg, e);
+                throw new AppException(msg, e);
+            }
         }
 
-        try{
-            this.parseArgumentResolvers(root);
-        }catch (Exception e){
-            String msg = "解析参数处理类集合时出错!";
-            LOGGER.error(msg, e);
-            throw new RuntimeException(msg, e);
-        }
-
-        try{
-            this.parseReturnHandlers(root);
-        }catch (Exception e){
-            String msg = "解析结果处理类集合时出错!";
-            LOGGER.error(msg, e);
-            throw new RuntimeException(msg, e);
-        }
-
-        try{
-            this.parseUrlAlias(root);
-        }catch (Exception e) {
-            String msg = "解析url别名集合时出错!";
-            LOGGER.error(msg, e);
-            throw new RuntimeException(msg, e);
-        }
     }
 
     /**
@@ -148,7 +165,7 @@ public class XmlReader implements SourceReader {
         List<Element> handlerEl = returnHandlers.elements(ELEMENT_HANDLER);
         if(handlerEl != null && handlerEl.size() > 0){
             for(Element e : handlerEl){
-                Class<ResponseGeneratorConvertor> cls = (Class<ResponseGeneratorConvertor>) Class.forName(e.getStringValue());
+                Class<ResponseGeneratorHandler> cls = (Class<ResponseGeneratorHandler>) Class.forName(e.getStringValue());
                 handlers.add(cls.newInstance());
             }
         }
@@ -176,7 +193,7 @@ public class XmlReader implements SourceReader {
     }
 
     @Override
-    public List<ResponseGeneratorConvertor> getHandlers() {
+    public List<ResponseGeneratorHandler> getHandlers() {
         return handlers;
     }
 
@@ -188,5 +205,13 @@ public class XmlReader implements SourceReader {
     @Override
     public Map<String, String> getUrlAlias() {
         return urlAlias;
+    }
+
+    public List<String> getPaths() {
+        return paths;
+    }
+
+    public void setPaths(List<String> paths) {
+        this.paths = paths;
     }
 }

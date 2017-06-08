@@ -42,6 +42,9 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
         }else{
             value = JSONObject.toJSONString(arg);
         }
+        if(LOGGER.isInfoEnabled()){
+            LOGGER.info("请求中添加body!", "body" , value);
+        }
         if(StringUtils.isNotEmpty(value)){
             byte[] body;
             try {
@@ -54,6 +57,7 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
             param.setRequestBody(body);
         }
         //从param中删掉
-        param.removeParam(methodParameter.getParamName());
+        param.removeGetParam(methodParameter.getParamName());
+        param.removePostParam(methodParameter.getParamName());
     }
 }

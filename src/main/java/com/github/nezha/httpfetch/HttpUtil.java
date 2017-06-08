@@ -1,6 +1,7 @@
 package com.github.nezha.httpfetch;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -22,30 +23,83 @@ public class HttpUtil {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(HttpUtil.class);
 
-    public static byte[] get(String url, Map<String, String> param, Map<String, String> headers, Integer timeOut, Integer readTimeout) {
-        return httpRequest(url, "GET", param, null, null, headers, "UTF-8", timeOut, readTimeout);
+    public static byte[] get(String url, Map<String, String> getParam, Map<String, String> headers, Integer timeOut, Integer readTimeout) {
+        return httpRequest(new StringBuffer(url), "GET", getParam, null, headers, "UTF-8", timeOut, readTimeout);
     }
 
-    public static byte[] post(String url, Map<String, String> param, Map<String, File> fileParam,
+    public static byte[] post(String url, Map<String, String> getParam, Map<String, String> postParam, Map<String, Object> formParam,
                               byte[] body, Map<String, String> headers, String encoding,
                               Integer timeOut, Integer readTimeout) {
-        return httpRequest(url, "POST", param, fileParam,
-                body, headers, encoding, timeOut, readTimeout);
+        return httpRequest(new StringBuffer(url), "POST", getParam, postParam, formParam, body, headers, encoding, timeOut, readTimeout);
     }
 
     /**
+     *
+     * @param url
+     * @param requestType
+     * @param getParam
+     * @param postParam   参数,如果有body则作为url后缀传递,如果没有body作为body传递
+     * @param formParam
+     * @param body
+     * @param headers
+     * @param encoding
+     * @param timeout
+     * @param readTimeout
+     * @return
+     * @throws IOException
+     */
+    public static byte[] httpRequest(StringBuffer url, String requestType, Map<String, String> getParam, Map<String, String> postParam, Map<String, Object> formParam,
+                                     byte[] body, Map<String, String> headers, String encoding,
+                                     Integer timeout, Integer readTimeout) {
+        try{
+            if (formParam == null || formParam.isEmpty()) {
+                //没有文件上传的form
+                //作为url后缀
+                String postParamUrl = convertMap2UrlParam(postParam, encoding, false);
+                if (body != null || !"POST".equals(requestType)) {
+                    //需要向输出流写所以
+                    //param做为url后缀传递
+                    if (url.indexOf("?") == -1) {
+                        url.append("?");
+                    }
+                    url.append(postParamUrl);
+                } else {
+                    //将参数作为二进制流传递
+                    body = postParamUrl.getBytes();
+                }
+            }else{
+                formParam.putAll(postParam);
+
+                //如果需要则写道body流中
+                long r = (long) (Math.random() * 1000000L);
+                String boundary = "---------------------------7d" + r;
+                headers.put("Content-Type", "multipart/form-data; boundary=" + boundary + "; charset=" + encoding);
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                writeWithFormParams(formParam, boundary, encoding, baos);
+
+                body = baos.toByteArray();
+            }
+        }catch (Exception e){
+            LOGGER.error("发起POST请求时出错!", "url", url);
+            throw new RuntimeException("发起请求时出错!", e);
+        }
+
+        return httpRequest(url, requestType, getParam, body, headers, encoding, timeout, readTimeout);
+    }
+    /**
      * @param url         地址
      * @param requestType GET、POST、DELETE、INPUT等http提供的功能
-     * @param param       参数,如果有body则作为url后缀传递,如果没有body作为body传递
+     * @param getParam    参数,始终做get参数传递
      * @param body        输出流的字节
      * @param headers     头
-     * @param timeOut     超时时间
+     * @param timeout     超时时间
      * @param readTimeout 读取超时时间
      * @return
      */
-    public static byte[] httpRequest(String url, String requestType, Map<String, String> param, Map<String, File> fileParam,
-                                     byte[] body, Map<String, String> headers, String encoding,
-                                     Integer timeOut, Integer readTimeout) {
+    private static byte[] httpRequest(StringBuffer url, String requestType, Map<String, String> getParam,
+                                      byte[] body, Map<String, String> headers, String encoding,
+                                      Integer timeout, Integer readTimeout) {
 
 
         if (StringUtils.isEmpty(url)) {
@@ -60,37 +114,14 @@ public class HttpUtil {
         InputStream is = null;
         OutputStream os = null;
         try {
-
-            StringBuffer paramUrl = new StringBuffer();
-
-            if (fileParam == null || fileParam.isEmpty()) {
-                //没有文件上传的form
-                if (param != null && !param.isEmpty()) {
-                    Iterator<Map.Entry<String, String>> it = param.entrySet().iterator();
-                    while (it.hasNext()) {
-                        Map.Entry<String, String> e = it.next();
-                        if (StringUtils.isNotBlank(e.getValue())) {
-                            paramUrl.append("&" + e.getKey() + "=" + URLEncoder.encode(e.getValue(), encoding));
-                        }
-                    }
-                }
-
-                if (paramUrl.length() > 0) {
-                    if (body != null || !"POST".equals(requestType)) {
-                        //需要向输出流写所以
-                        //param做为url后缀传递
-                        if (url.indexOf("?") == -1) {
-                            url += "?";
-                        }
-                        url += paramUrl.toString();
-                    } else {
-                        //将参数作为二进制流传递
-                        body = paramUrl.toString().getBytes();
-                    }
-                }
+            //作为url后缀
+            String paramUrl = convertMap2UrlParam(getParam, encoding, true);
+            if (url.indexOf("?") == -1) {
+                url.append("?");
             }
+            url.append(paramUrl);
 
-            HttpURLConnection conn = (HttpURLConnection) (new URL(url).openConnection());
+            HttpURLConnection conn = (HttpURLConnection) (new URL(url.toString()).openConnection());
 
             try {
                 // 可以根据需要 提交 GET、POST、DELETE、INPUT等http提供的功能
@@ -102,38 +133,26 @@ public class HttpUtil {
             }
 
             if (headers != null && !headers.isEmpty()) {
-                Iterator<Map.Entry<String, String>> it = headers.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry<String, String> e = it.next();
-                    conn.addRequestProperty(e.getKey(), e.getValue());
+                Iterator<Map.Entry<String, String>> entryIterator = headers.entrySet().iterator();
+                while(entryIterator.hasNext()){
+                    Map.Entry<String, String> entry = entryIterator.next();
+                    conn.addRequestProperty(entry.getKey(), entry.getValue());
                 }
-
                 if(LOGGER.isDebugEnabled()){
-                    LOGGER.debug("headers:::{}", JSON.toJSONString(conn.getRequestProperties()));
+                    LOGGER.debug("request http! header [{}]", JSON.toJSONString(conn.getRequestProperties()));
                 }
             }
 
             if (readTimeout != null) {
                 conn.setReadTimeout(readTimeout);
             }
-            if (timeOut != null) {
-                conn.setConnectTimeout(timeOut);
+            if (timeout != null) {
+                conn.setConnectTimeout(timeout);
             }
 
             conn.setDoInput(true);
 
-            if (fileParam != null && !fileParam.isEmpty()) {
-                //如果需要则写道body流中
-                long r = (long) (Math.random() * 1000000L);
-                String boundary = "---------------------------7d" + r;
-                conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary + "; charset=" + encoding);
-
-                conn.setDoOutput(true);
-                os = conn.getOutputStream();
-
-                //采用文件上传方式写入流中
-                writeWithFileParams(param, fileParam, boundary, encoding, os);
-            } else if (ArrayUtils.isNotEmpty(body)) {
+            if (ArrayUtils.isNotEmpty(body)) {
                 //如果需要则写道body流中
                 conn.setDoOutput(true);
 
@@ -150,7 +169,7 @@ public class HttpUtil {
                 is = conn.getErrorStream();
             }
             if(LOGGER.isInfoEnabled()){
-                LOGGER.info("请求::{} 耗时::{}!", url, System.currentTimeMillis()-time);
+                LOGGER.info("调用结束!", "url", url, "rt", System.currentTimeMillis()-time);
             }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -162,8 +181,8 @@ public class HttpUtil {
             is.close();
             return baos.toByteArray();
         } catch (Exception e) {
-            LOGGER.error("发起POST请求时出错! url [{}]", url);
-            throw new RuntimeException("发起POST请求时出错!", e);
+            LOGGER.error("发起请求时出错!", "url", url);
+            throw new RuntimeException("发起请求时出错!", e);
         } finally {
             if (is != null) {
                 try {
@@ -182,44 +201,60 @@ public class HttpUtil {
         }
     }
 
-    private static void writeWithFileParams(Map<String, String> stringParam, Map<String, File> fileParam, String boundary, String encoding, OutputStream os) throws Exception {
-        Iterator<Map.Entry<String, String>> iterator = stringParam.entrySet().iterator();
+    private static String convertMap2UrlParam(Map<String, String> params, String encoding, boolean needEncode) throws UnsupportedEncodingException {
+        if (params != null && !params.isEmpty()) {
+            StringBuffer paramUrl = new StringBuffer();
+            Iterator<Map.Entry<String, String>> it = params.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, String> e = it.next();
+                if (StringUtils.isNotBlank(e.getValue())) {
+                    paramUrl.append("&");
+                    paramUrl.append(e.getKey());
+                    paramUrl.append("=");
+                    String value = needEncode ? URLEncoder.encode(e.getValue(), encoding) : e.getValue();
+                    paramUrl.append(value);
+                }
+            }
+            if(paramUrl.length() > 0){
+                paramUrl.deleteCharAt(0);
+            }
+            return paramUrl.toString();
+        }
+        return "";
+    }
+
+    private static void writeWithFormParams( Map<String, Object> formParam, String boundary, String encoding, ByteArrayOutputStream os) throws IOException {
+        Iterator<Map.Entry<String, Object>> iterator = formParam.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<String, String> entry = iterator.next();
+            Map.Entry<String, Object> entry = iterator.next();
             String name = entry.getKey();
-            String value = entry.getValue();
-            if (StringUtils.isNotEmpty(name) && StringUtils.isNotEmpty(value)) {
-                writeBytes("--" + boundary + "\r\n", encoding, os);
-                writeBytes("Content-Disposition: form-data; name=\"" + name + "\"\r\n", encoding, os);
-                writeBytes("Content-Type: text/plain; charset=" + encoding + "\r\n", encoding, os);
-                writeBytes("\r\n", encoding, os);
-                writeBytes(URLEncoder.encode(value, encoding) + "\r\n", encoding, os);
+            Object value = entry.getValue();
+            if (StringUtils.isNotEmpty(name)) {
+                if(value instanceof File){
+                    File file = (File)value;
+                    writeBytes("--" + boundary + "\r\n", encoding, os);
+                    writeBytes("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + URLEncoder.encode(file.getName(), encoding) + "\"\r\n", encoding, os);
+                    writeBytes("Content-Type: application/octet-stream\r\n", encoding, os);
+                    writeBytes("\r\n", encoding, os);
+                    writeBytes(file, os);
+                    writeBytes("\r\n", encoding, os);
+                }else{
+                    writeBytes("--" + boundary + "\r\n", encoding, os);
+                    writeBytes("Content-Disposition: form-data; name=\"" + name + "\"\r\n", encoding, os);
+                    writeBytes("Content-Type: text/plain; charset=" + encoding + "\r\n", encoding, os);
+                    writeBytes("\r\n", encoding, os);
+                    writeBytes(String.valueOf(value) + "\r\n", encoding, os);
+                }
             }
         }
-
-        Iterator<Map.Entry<String, File>> fileIterator = fileParam.entrySet().iterator();
-        while (fileIterator.hasNext()) {
-            Map.Entry<String, File> entry = fileIterator.next();
-            String name = entry.getKey();
-            File value = entry.getValue();
-            if (StringUtils.isNotEmpty(name) && value != null) {
-                writeBytes("--" + boundary + "\r\n", encoding, os);
-                writeBytes("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + URLEncoder.encode(value.getName(), encoding) + "\"\r\n", encoding, os);
-                writeBytes("Content-Type: application/octet-stream\r\n", encoding, os);
-                writeBytes("\r\n", encoding, os);
-                writeBytes(value, os);
-                writeBytes("\r\n", encoding, os);
-            }
-        }
-
         writeBytes("--" + boundary + "--\r\n", encoding, os);
     }
 
-    private static void writeBytes(String content, String encoding, OutputStream os) throws IOException {
+    private static void writeBytes(String content, String encoding, ByteArrayOutputStream os) throws IOException {
         os.write(content.getBytes(encoding));
     }
 
-    private static void writeBytes(File content, OutputStream os) throws IOException {
+    private static void writeBytes(File content, ByteArrayOutputStream os) {
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(content);
@@ -232,7 +267,12 @@ public class HttpUtil {
             LOGGER.error("读取文件出错!", e);
         } finally {
             if (fis != null) {
-                fis.close();
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    String msg = "文件流关闭失败! fileName ["+content.getName()+"]";
+                    throw new RuntimeException(msg);
+                }
             }
         }
     }

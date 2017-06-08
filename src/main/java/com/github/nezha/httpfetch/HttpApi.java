@@ -8,10 +8,14 @@ import java.lang.annotation.*;
 public @interface HttpApi {
 
 	/**
-	 * 用于函数到url的映射,如果为空的话,会通过接口类名和函数名拼接在一起
-	 * 从httpApi.xml中找出匹配的url:这样的做法是因为很多接口会在不同的环境下有不同的host
+	 * url的优先级比operateCode高;
+	 * 如果url为空的话, 通过operateCode或者服务interface+method在配置文件中的aliases节点映射url;
+	 * operateCode的使用 主要是因为有一些url的host在不同的环境又不一样的配置
+	 * 举例interface+method:BaidiApi.search(String) alia为baiduApi.search
 	 * @return
      */
+	String url() default "";
+
 	String operateCode() default "";
 
 	/**
@@ -19,10 +23,12 @@ public @interface HttpApi {
 	 * @return
      */
 	String method() default "GET";
-	
-	Class<?> responseCls() default Object.class;
 
-	Header[] headers() default {};
+	/**
+	 * http head
+	 * @return
+     */
+	HttpApiHeader[] headers() default {};
 
 	/**
 	 * 结果生产类,使用类的simpleName就行

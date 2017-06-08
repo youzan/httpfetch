@@ -28,7 +28,7 @@ public interface HttpApiInterceptor {
     /**
      * 返回结果前处理
      */
-    Object beforeReturn(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, Object[] args, Object response);
+    Object afterGenerateResponse(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, Object[] args, Object response);
 
 
     /**
