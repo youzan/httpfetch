@@ -17,13 +17,13 @@ public class MbostockApiTest extends BaseTest {
     @Test
     public void test(){
         UsCongressResponseVo responseVo = mbostockApi.getUsCongress();
-        System.out.println(responseVo.getType());
-        System.out.println(responseVo.getArcs().size());
-        System.out.println(responseVo.getObjects().getDistricts().getBbox().size());
-        System.out.println(responseVo.getObjects().getDistricts().getType());
-        System.out.println(responseVo.getObjects().getDistricts().getGeometries().size());
-        System.out.println(responseVo.getTransform().getScale());
-        System.out.println(responseVo.getTransform().getTranslate());
+        System.out.println("type=="+responseVo.getType());
+        System.out.println("arcs->size=="+responseVo.getArcs().size());
+        System.out.println("objects->districts->bbox->size=="+responseVo.getObjects().getDistricts().getBbox().size());
+        System.out.println("objects->districts->type=="+responseVo.getObjects().getDistricts().getType());
+        System.out.println("objects->districts->geometries->size=="+responseVo.getObjects().getDistricts().getGeometries().size());
+        System.out.println("transform->scale=="+responseVo.getTransform().getScale());
+        System.out.println("transform->translate=="+responseVo.getTransform().getTranslate());
     }
 
 }
