@@ -1,9 +1,10 @@
 package com.github.nezha.httpfetch.spring;
 
-import com.youzan.bigdata.dspadapter.util.httpapi.SourceReader;
-import com.youzan.bigdata.dspadapter.util.httpapi.handler.ResponseGeneratorHandler;
-import com.youzan.bigdata.dspadapter.util.httpapi.interceptor.HttpApiInterceptor;
-import com.youzan.bigdata.dspadapter.util.httpapi.resolver.MethodParameterResolver;
+
+import com.github.nezha.httpfetch.SourceReader;
+import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
+import com.github.nezha.httpfetch.interceptor.HttpApiInterceptor;
+import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
 
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,7 @@ public class SpringReader implements SourceReader {
 
     List<HttpApiInterceptor> interceptors;
 
-    List<ResponseGeneratorHandler> handlers;
+    List<ResponseGeneratorConvertor> handlers;
 
     List<MethodParameterResolver> parameterResolvers;
 
@@ -27,7 +28,7 @@ public class SpringReader implements SourceReader {
     }
 
     @Override
-    public List<ResponseGeneratorHandler> getHandlers() {
+    public List<ResponseGeneratorConvertor> getHandlers() {
         return handlers;
     }
 
@@ -45,7 +46,7 @@ public class SpringReader implements SourceReader {
         this.interceptors = interceptors;
     }
 
-    public void setHandlers(List<ResponseGeneratorHandler> handlers) {
+    public void setHandlers(List<ResponseGeneratorConvertor> handlers) {
         this.handlers = handlers;
     }
 

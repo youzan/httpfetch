@@ -6,8 +6,6 @@ import com.github.nezha.httpfetch.CommonUtils;
 import com.github.nezha.httpfetch.HttpApiMethodWrapper;
 import com.github.nezha.httpfetch.HttpApiRequestParam;
 import com.github.nezha.httpfetch.MethodParameter;
-import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,18 +51,17 @@ public class BeanMethodParameterResolver implements MethodParameterResolver {
 					continue;
 				}
 				//取getter
-				if (PropertyUtils.isReadable(arg, name)) {
-					//取param name
-					//TODO 后期如果可以的话转成Param
-					JSONField jsonField = field.getAnnotation(JSONField.class);
-					if(jsonField != null && StringUtils.isNotEmpty(jsonField.name())){
-						paramNames.add(jsonField.name());
-					}else{
-						paramNames.add(name);
-					}
-					//取getter
-					getterFields.add(field);
+				//取param name
+				//TODO 后期如果可以的话转成Param
+				JSONField jsonField = field.getAnnotation(JSONField.class);
+				if(jsonField != null && !CommonUtils.isStringEmpty(jsonField.name())){
+					paramNames.add(jsonField.name());
+				}else{
+					paramNames.add(name);
 				}
+				//取getter
+				field.setAccessible(true);
+				getterFields.add(field);
 			}
 	        beanGetterNamesCache.put(cls, getterFields);
 			paramNamesCache.put(cls, paramNames);
@@ -78,7 +75,7 @@ public class BeanMethodParameterResolver implements MethodParameterResolver {
 				String name = field.getName();
 				try {
 					String paramName = paramNames.get(i);
-					Object value = PropertyUtils.getSimpleProperty(arg, name);
+					Object value = field.equals(arg);
 					if(value != null){
 						Class<?> parameterCls = value.getClass();
 

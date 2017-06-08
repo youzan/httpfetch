@@ -1,7 +1,6 @@
 package com.github.nezha.httpfetch;
 
 import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
-import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -55,7 +54,7 @@ public class MethodParameter {
 	 */
 	public boolean hasAnnotation(Class<?> targetAnno){
 		Annotation[] annos = this.getParameterAnnotations();
-		if(ArrayUtils.isNotEmpty(annos)){
+		if(!CommonUtils.isArrayEmpty(annos)){
 			for(Annotation anno : annos){
 				if(targetAnno.isInstance(anno)){
 					return true;
@@ -72,7 +71,7 @@ public class MethodParameter {
 	 */
 	public <T> T getAnnotation(Class<T> targetAnno){
 		Annotation[] annos = this.getParameterAnnotations();
-		if(ArrayUtils.isNotEmpty(annos)){
+		if(!CommonUtils.isArrayEmpty(annos)){
 			for(Annotation anno : annos){
 				if(targetAnno.isInstance(anno)){
 					return (T) anno;

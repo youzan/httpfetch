@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="
+		    http://www.springframework.org/schema/beans
+		    http://www.springframework.org/schema/beans/spring-beans.xsd
+	    ">
+
+	<bean id="springReader" class="com.github.nezha.httpfetch.spring.SpringReader" >
+		<property name="interceptors">
+			<list>
+			</list>
+		</property>
+		<property name="handlers">
+			<list>
+				<bean class="com.github.nezha.httpfetch.convertor.DefaultResponseGeneratorService" />
+			</list>
+		</property>
+		<property name="parameterResolvers">
+			<list>
+				<bean class="com.github.nezha.httpfetch.resolver.BeanMethodParameterResolver" />
+				<bean class="com.github.nezha.httpfetch.resolver.RequestBodyParameterResolver" />
+				<bean class="com.github.nezha.httpfetch.resolver.FileParameterResolver" />
+				<bean class="com.github.nezha.httpfetch.resolver.DefaultMethodParameterResolver" />
+			</list>
+		</property>
+		<property name="urlAlias">
+			<map>
+				<entry key="mbostockApi.getUsCongress" value="https://bl.ocks.org/mbostock/raw/4090846/us-congress-113.json" />
+			</map>
+		</property>
+	</bean>
+
+	<bean id="httpApiService" class="com.github.nezha.httpfetch.HttpApiService">
+		<property name="sourceReaders">
+			<list>
+				<ref bean="springReader"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean class="com.github.nezha.httpfetch.spring.HttpApiBeanPostProcessor">
+		<property name="service" ref="httpApiService" />
+	</bean>
+
+</beans>

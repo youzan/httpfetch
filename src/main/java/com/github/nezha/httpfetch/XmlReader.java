@@ -1,10 +1,8 @@
 package com.github.nezha.httpfetch;
 
-import com.alibaba.dubbo.common.utils.CollectionUtils;
-import com.youzan.bigdata.dspadapter.util.exception.AppException;
-import com.youzan.bigdata.dspadapter.util.httpapi.handler.ResponseGeneratorHandler;
-import com.youzan.bigdata.dspadapter.util.httpapi.interceptor.HttpApiInterceptor;
-import com.youzan.bigdata.dspadapter.util.httpapi.resolver.MethodParameterResolver;
+import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
+import com.github.nezha.httpfetch.interceptor.HttpApiInterceptor;
+import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -47,7 +45,7 @@ public class XmlReader implements SourceReader {
     /**
      * 结果集处理类，如果需要不同的结果转换时，可以继承并注册
      */
-    private List<ResponseGeneratorHandler> handlers = new ArrayList<>();
+    private List<ResponseGeneratorConvertor> handlers = new ArrayList<>();
     /**
      * 入参处理类，如果需要扩展参数的转换方式时可以继承并注册
      */
@@ -58,10 +56,10 @@ public class XmlReader implements SourceReader {
     private List<String> paths;
 
     public void init(){
-        if(!CollectionUtils.isEmpty(paths)){
-            paths.forEach(e -> {
-                this.read(e);
-            });
+        if(!CommonUtils.isCollectionEmpty(paths)){
+            for(String path : paths){
+                this.read(path);
+            }
         }
     }
 
@@ -82,37 +80,14 @@ public class XmlReader implements SourceReader {
         }
 
         if (null!=root){
-            try{
-                this.parseInterceptos(root);
-            }catch (Exception e){
-                String msg = "解析请求拦截器集合时出错!";
-                LOGGER.error(msg, e);
-                throw new AppException(msg, e);
-            }
 
-            try{
-                this.parseArgumentResolvers(root);
-            }catch (Exception e){
-                String msg = "解析参数处理类集合时出错!";
-                LOGGER.error(msg, e);
-                throw new AppException(msg, e);
-            }
+            this.parseInterceptos(root);
 
-            try{
-                this.parseReturnHandlers(root);
-            }catch (Exception e){
-                String msg = "解析结果处理类集合时出错!";
-                LOGGER.error(msg, e);
-                throw new AppException(msg, e);
-            }
+            this.parseArgumentResolvers(root);
 
-            try{
-                this.parseUrlAlias(root);
-            }catch (Exception e) {
-                String msg = "解析url别名集合时出错!";
-                LOGGER.error(msg, e);
-                throw new AppException(msg, e);
-            }
+            this.parseReturnHandlers(root);
+
+            this.parseUrlAlias(root);
         }
 
     }
@@ -124,14 +99,20 @@ public class XmlReader implements SourceReader {
      * @throws IllegalAccessException 服务类初始化出错
      * @throws InstantiationException 服务类初始化出错
      */
-    private void parseInterceptos(Element root) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        Element resolversEl = root.element(ELEMENT_INTERCEPTORS);
-        List<Element> resolverEl = resolversEl.elements(ELEMENT_INTERCEPTOR);
-        if(resolverEl != null && resolverEl.size() > 0){
-            for(Element e : resolverEl){
-                Class<HttpApiInterceptor> cls = (Class<HttpApiInterceptor>) Class.forName(e.getStringValue());
-                interceptors.add(cls.newInstance());
+    private void parseInterceptos(Element root) {
+        try{
+            Element resolversEl = root.element(ELEMENT_INTERCEPTORS);
+            List<Element> resolverEl = resolversEl.elements(ELEMENT_INTERCEPTOR);
+            if(resolverEl != null && resolverEl.size() > 0){
+                for(Element e : resolverEl){
+                    Class<HttpApiInterceptor> cls = (Class<HttpApiInterceptor>) Class.forName(e.getStringValue());
+                    interceptors.add(cls.newInstance());
+                }
             }
+        }catch (Exception e){
+            String msg = "解析请求拦截器集合时出错!";
+            LOGGER.error(msg, e);
+            throw new RuntimeException(msg);
         }
     }
 
@@ -142,14 +123,20 @@ public class XmlReader implements SourceReader {
      * @throws IllegalAccessException 服务类初始化出错
      * @throws InstantiationException 服务类初始化出错
      */
-    private void parseArgumentResolvers(Element root) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        Element resolversEl = root.element(ELEMENT_ARGUMENT_RESOLVERS);
-        List<Element> resolverEl = resolversEl.elements(ELEMENT_RESOLVER);
-        if(resolverEl != null && resolverEl.size() > 0){
-            for(Element e : resolverEl){
-                Class<MethodParameterResolver> cls = (Class<MethodParameterResolver>) Class.forName(e.getStringValue());
-                parameterResolvers.add(cls.newInstance());
+    private void parseArgumentResolvers(Element root) {
+        try{
+            Element resolversEl = root.element(ELEMENT_ARGUMENT_RESOLVERS);
+            List<Element> resolverEl = resolversEl.elements(ELEMENT_RESOLVER);
+            if(resolverEl != null && resolverEl.size() > 0){
+                for(Element e : resolverEl){
+                    Class<MethodParameterResolver> cls = (Class<MethodParameterResolver>) Class.forName(e.getStringValue());
+                    parameterResolvers.add(cls.newInstance());
+                }
             }
+        }catch (Exception e){
+            String msg = "解析参数处理类集合时出错!";
+            LOGGER.error(msg, e);
+            throw new RuntimeException(msg);
         }
     }
 
@@ -160,14 +147,20 @@ public class XmlReader implements SourceReader {
      * @throws IllegalAccessException 服务类初始化出错
      * @throws InstantiationException 服务类初始化出错
      */
-    private void parseReturnHandlers(Element root) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        Element returnHandlers = root.element(ELEMENT_RETURN_HANDLERS);
-        List<Element> handlerEl = returnHandlers.elements(ELEMENT_HANDLER);
-        if(handlerEl != null && handlerEl.size() > 0){
-            for(Element e : handlerEl){
-                Class<ResponseGeneratorHandler> cls = (Class<ResponseGeneratorHandler>) Class.forName(e.getStringValue());
-                handlers.add(cls.newInstance());
+    private void parseReturnHandlers(Element root) {
+        try{
+            Element returnHandlers = root.element(ELEMENT_RETURN_HANDLERS);
+            List<Element> handlerEl = returnHandlers.elements(ELEMENT_HANDLER);
+            if(handlerEl != null && handlerEl.size() > 0){
+                for(Element e : handlerEl){
+                    Class<ResponseGeneratorConvertor> cls = (Class<ResponseGeneratorConvertor>) Class.forName(e.getStringValue());
+                    handlers.add(cls.newInstance());
+                }
             }
+        }catch (Exception e){
+            String msg = "解析结果处理类集合时出错!";
+            LOGGER.error(msg, e);
+            throw new RuntimeException(msg);
         }
     }
 
@@ -176,14 +169,20 @@ public class XmlReader implements SourceReader {
      * @param root
      */
     private void parseUrlAlias(Element root) {
-        Element aliasesEl = root.element(ELEMENT_ALIASES);
-        List<Element> aliasEl = aliasesEl.elements(ELEMENT_ALIAS);
-        if(aliasEl != null && aliasEl.size() > 0){
-            for(Element e : aliasEl){
-                String key = e.attributeValue(ELEMENT_ALIAS_KEY);
-                String value = e.attributeValue(ELEMENT_ALIAS_VALUE);
-                urlAlias.put(key, value);
+        try{
+            Element aliasesEl = root.element(ELEMENT_ALIASES);
+            List<Element> aliasEl = aliasesEl.elements(ELEMENT_ALIAS);
+            if(aliasEl != null && aliasEl.size() > 0){
+                for(Element e : aliasEl){
+                    String key = e.attributeValue(ELEMENT_ALIAS_KEY);
+                    String value = e.attributeValue(ELEMENT_ALIAS_VALUE);
+                    urlAlias.put(key, value);
+                }
             }
+        }catch (Exception e) {
+            String msg = "解析url别名集合时出错!";
+            LOGGER.error(msg, e);
+            throw new RuntimeException(msg);
         }
     }
 
@@ -193,7 +192,7 @@ public class XmlReader implements SourceReader {
     }
 
     @Override
-    public List<ResponseGeneratorHandler> getHandlers() {
+    public List<ResponseGeneratorConvertor> getHandlers() {
         return handlers;
     }
 

@@ -1,7 +1,5 @@
 package com.github.nezha.httpfetch;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,8 +14,20 @@ public class CommonUtils {
         return collection == null || collection.isEmpty();
     }
 
+    public static boolean isArrayEmpty(Object[] array){
+        return array == null || array.length == 0;
+    }
+
+    public static boolean isArrayEmpty(byte[] array){
+        return array == null || array.length == 0;
+    }
+
+    public static boolean isStringEmpty(CharSequence str){
+        return str == null || str.length() == 0;
+    }
+
     public static boolean isInLimit(String beCompared, String... compareds) {
-        if (ArrayUtils.isNotEmpty(compareds)) {
+        if (!isArrayEmpty(compareds)) {
             for (String compared : compareds) {
                 if (beCompared == compared || beCompared.equals(compared)) {
                     return true;

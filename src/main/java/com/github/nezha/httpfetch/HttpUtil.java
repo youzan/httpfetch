@@ -1,9 +1,6 @@
 package com.github.nezha.httpfetch;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +45,7 @@ public class HttpUtil {
      * @return
      * @throws IOException
      */
-    public static byte[] httpRequest(StringBuffer url, String requestType, Map<String, String> getParam, Map<String, String> postParam, Map<String, Object> formParam,
+    private static byte[] httpRequest(StringBuffer url, String requestType, Map<String, String> getParam, Map<String, String> postParam, Map<String, Object> formParam,
                                      byte[] body, Map<String, String> headers, String encoding,
                                      Integer timeout, Integer readTimeout) {
         try{
@@ -102,7 +99,7 @@ public class HttpUtil {
                                       Integer timeout, Integer readTimeout) {
 
 
-        if (StringUtils.isEmpty(url)) {
+        if (CommonUtils.isStringEmpty(url)) {
             throw new IllegalArgumentException("参数url为空!");
         }
         if (!CommonUtils.isInLimit(requestType,
@@ -152,7 +149,7 @@ public class HttpUtil {
 
             conn.setDoInput(true);
 
-            if (ArrayUtils.isNotEmpty(body)) {
+            if (!CommonUtils.isArrayEmpty(body)) {
                 //如果需要则写道body流中
                 conn.setDoOutput(true);
 
@@ -207,7 +204,7 @@ public class HttpUtil {
             Iterator<Map.Entry<String, String>> it = params.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<String, String> e = it.next();
-                if (StringUtils.isNotBlank(e.getValue())) {
+                if (e.getValue() != null) {
                     paramUrl.append("&");
                     paramUrl.append(e.getKey());
                     paramUrl.append("=");
@@ -229,7 +226,7 @@ public class HttpUtil {
             Map.Entry<String, Object> entry = iterator.next();
             String name = entry.getKey();
             Object value = entry.getValue();
-            if (StringUtils.isNotEmpty(name)) {
+            if (!CommonUtils.isStringEmpty(name)) {
                 if(value instanceof File){
                     File file = (File)value;
                     writeBytes("--" + boundary + "\r\n", encoding, os);

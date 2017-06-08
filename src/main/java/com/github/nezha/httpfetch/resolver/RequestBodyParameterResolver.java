@@ -1,10 +1,10 @@
 package com.github.nezha.httpfetch.resolver;
 
 import com.alibaba.fastjson.JSONObject;
+import com.github.nezha.httpfetch.CommonUtils;
 import com.github.nezha.httpfetch.HttpApiMethodWrapper;
 import com.github.nezha.httpfetch.HttpApiRequestParam;
 import com.github.nezha.httpfetch.MethodParameter;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
         if(LOGGER.isInfoEnabled()){
             LOGGER.info("请求中添加body!", "body" , value);
         }
-        if(StringUtils.isNotEmpty(value)){
+        if(!CommonUtils.isStringEmpty(value)){
             byte[] body;
             try {
                 body = value.getBytes("UTF-8");

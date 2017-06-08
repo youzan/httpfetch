@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<setting>
+
+    <interceptors>
+    </interceptors>
+
+    <!-- 注册httpApi接口的参数处理类 -->
+    <argumentResolvers>
+        <resolver>com.github.nezha.httpfetch.resolver.DefaultMethodParameterResolver</resolver>
+    </argumentResolvers>
+
+    <!-- 注册httpApi接口的结果处理类 -->
+    <returnHandlers>
+        <handler>com.github.nezha.httpfetch.handler.DefaultResponseGeneratorService</handler>
+    </returnHandlers>
+
+    <aliases>
+        <alias key="createNewApi.make" value="/creative_new/make" />
+    </aliases>
+
+</setting>

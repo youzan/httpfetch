@@ -6,8 +6,6 @@ import com.github.nezha.httpfetch.interceptor.HttpApiInterceptor;
 import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,7 +120,7 @@ public class HttpApiService {
 
                 //查询指定的结果转换类获取结果转换服务类
                 ResponseGeneratorConvertor generatorService = null;
-                if (StringUtils.isNotEmpty(httpApiAnno.generator())) {
+                if (!CommonUtils.isStringEmpty(httpApiAnno.generator())) {
                     for (ResponseGeneratorConvertor handler : serviceWrapper.getHandlers()) {
                         if (httpApiAnno instanceof ResponseGeneratorConvertor){
                             generatorService = handler;
@@ -199,7 +197,7 @@ public class HttpApiService {
         private Map<String, String> getHeaders(HttpApi anno){
             Map<String, String> headers = new HashMap<>();
             HttpApiHeader[] headersAnno = anno.headers();
-            if(ArrayUtils.isNotEmpty(headersAnno)){
+            if(!CommonUtils.isArrayEmpty(headersAnno)){
                 for(HttpApiHeader header : headersAnno){
                     if(header != null){
                         headers.put(header.key(), header.value());
@@ -409,12 +407,12 @@ public class HttpApiService {
 
         private String getUrl(Class<?> serviceCls, Method method){
             HttpApi httpApi = method.getAnnotation(HttpApi.class);
-            if(StringUtils.isNotEmpty(httpApi.url())){
+            if(!CommonUtils.isStringEmpty(httpApi.url())){
                 //如果注解中已经写明了url,则直接取 注解的url
                 return httpApi.url();
             }
             String code = httpApi.operateCode();
-            if(StringUtils.isEmpty(code)){
+            if(CommonUtils.isStringEmpty(code)){
                 //如果为空，则使用默认的操作码
                 String beanName = decapitalize(serviceCls.getSimpleName());
                 String methodName = method.getName();

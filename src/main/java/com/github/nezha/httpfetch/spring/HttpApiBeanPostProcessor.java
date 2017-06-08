@@ -3,6 +3,11 @@ package com.github.nezha.httpfetch.spring;
 import com.github.nezha.httpfetch.HttpApiService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.support.MergedBeanDefinitionPostProcessor;
+import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.core.Ordered;
+import org.springframework.core.PriorityOrdered;
 
 import java.lang.reflect.Field;
 
@@ -68,6 +73,6 @@ public class HttpApiBeanPostProcessor implements MergedBeanDefinitionPostProcess
 
     @Override
     public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
-    }
 
+    }
 }
