@@ -4,6 +4,8 @@ import com.github.nezha.httpfetch.*;
 import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.PriorityOrdered;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -155,6 +157,11 @@ public class MethodWrapperChain implements HttpApiChain {
         parameter.setGenericParameterType(method.getGenericParameterTypes()[index]);
         parameter.setParameterAnnotations(annotations);
         return parameter;
+    }
+
+    @Override
+    public int getOrder() {
+        return 10000;
     }
 
 }

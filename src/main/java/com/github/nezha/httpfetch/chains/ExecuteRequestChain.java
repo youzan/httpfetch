@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.github.nezha.httpfetch.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.PriorityOrdered;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -285,4 +287,10 @@ public class ExecuteRequestChain implements HttpApiChain {
             }
         }
     }
+
+    @Override
+    public int getOrder() {
+        return Integer.MIN_VALUE;
+    }
+
 }

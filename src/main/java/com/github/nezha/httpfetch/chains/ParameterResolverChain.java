@@ -45,4 +45,9 @@ public class ParameterResolverChain implements HttpApiChain {
         }
         return invoker.invoke(invocation);
     }
+
+    @Override
+    public int getOrder() {
+        return 8000;
+    }
 }

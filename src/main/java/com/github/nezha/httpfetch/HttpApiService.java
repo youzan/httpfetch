@@ -9,9 +9,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -42,6 +40,15 @@ public class HttpApiService {
         chains.add(new ExecuteRequestChain());
 
         chains.addAll(configuration.getChains());
+
+        //排序
+        Collections.sort(chains, new Comparator<HttpApiChain>() {
+            @Override
+            public int compare(HttpApiChain o1, HttpApiChain o2) {
+                return o1.getOrder() - o2.getOrder();
+            }
+        });
+
         HttpApiInvoker last = null;
         for(int i= chains.size()-1;i>=0;i--){
             final HttpApiChain chain = chains.get(i);

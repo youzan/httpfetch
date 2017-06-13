@@ -50,4 +50,8 @@ public class UrlWrapperChain implements HttpApiChain {
         return urlObj.toString();
     }
 
+    @Override
+    public int getOrder() {
+        return 9000;
+    }
 }
