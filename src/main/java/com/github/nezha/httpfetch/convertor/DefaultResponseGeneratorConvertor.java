@@ -20,9 +20,9 @@ import java.util.Map;
  * @author 11047530
  *
  */
-public class DefaultResponseGeneratorService implements ResponseGeneratorConvertor {
+public class DefaultResponseGeneratorConvertor implements ResponseGeneratorConvertor {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(DefaultResponseGeneratorService.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(DefaultResponseGeneratorConvertor.class);
 
     @Override
     public Object generate(Method method, HttpApiMethodWrapper wrapper, HttpApiRequestParam requestParam, byte[] response, Class<?> responseCls) {

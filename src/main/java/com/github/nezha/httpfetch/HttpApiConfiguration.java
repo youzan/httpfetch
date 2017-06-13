@@ -1,8 +1,9 @@
 package com.github.nezha.httpfetch;
 
+import com.github.nezha.httpfetch.chains.*;
+import com.github.nezha.httpfetch.convertor.DefaultResponseGeneratorConvertor;
 import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
-import com.github.nezha.httpfetch.chains.HttpApiChain;
-import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
+import com.github.nezha.httpfetch.resolver.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,26 +15,31 @@ import java.util.Map;
  */
 public class HttpApiConfiguration {
 
-    private List<SourceReader> sourceReaders = new ArrayList<>();
+    private List<SourceReader> sourceReaders;
 
     /**
      * 请求拦截器,做切面处理
      */
-    private List<HttpApiChain> chains = new ArrayList<>();
+    private List<HttpApiChain> chains;
 
     /**
      * 结果集处理类，如果需要不同的结果转换时，可以继承并注册
      */
-    private List<ResponseGeneratorConvertor> handlers = new ArrayList<>();
+    private List<ResponseGeneratorConvertor> convertors;
 
     /**
      * 入参处理类，如果需要扩展参数的转换方式时可以继承并注册
      */
-    private List<MethodParameterResolver> parameterResolvers = new ArrayList<>();
+    private List<MethodParameterResolver> parameterResolvers;
 
-    private Map<String, String> urlAlias = new HashMap<>();
+    private Map<String, String> urlAlias;
 
     public void init() {
+        chains = new ArrayList<>();
+        convertors = new ArrayList<>();
+        parameterResolvers = new ArrayList<>();
+        urlAlias = new HashMap<>();
+
         if (!sourceReaders.isEmpty()) {
             for (SourceReader reader : sourceReaders) {
                 if (reader != null) {
@@ -41,7 +47,7 @@ public class HttpApiConfiguration {
                         chains.addAll(reader.getChains());
                     }
                     if (reader.getHandlers() != null) {
-                        handlers.addAll(reader.getHandlers());
+                        convertors.addAll(reader.getHandlers());
                     }
                     if (reader.getParameterResolvers() != null) {
                         parameterResolvers.addAll(reader.getParameterResolvers());
@@ -52,6 +58,23 @@ public class HttpApiConfiguration {
                 }
             }
         }
+
+        //默认的链
+        chains.add(new MethodWrapperChain(this));
+        chains.add(new UrlWrapperChain(this));
+        chains.add(new ParameterResolverChain(this));
+        chains.add(new GenerateResponseChain(this));
+        chains.add(new ExecuteRequestChain());
+
+        //默认参数解析类
+        parameterResolvers.add(new BeanMethodParameterResolver());
+        parameterResolvers.add(new RequestBodyParameterResolver());
+        parameterResolvers.add(new FileParameterResolver());
+        parameterResolvers.add(new DefaultMethodParameterResolver());
+
+        //默认结果解析器
+        convertors.add(new DefaultResponseGeneratorConvertor());
+
     }
 
     public List<HttpApiChain> getChains() {
@@ -59,7 +82,7 @@ public class HttpApiConfiguration {
     }
 
     public List<ResponseGeneratorConvertor> getConvertors() {
-        return handlers;
+        return convertors;
     }
 
     public List<MethodParameterResolver> getParameterResolvers() {

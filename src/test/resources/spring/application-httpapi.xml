@@ -13,15 +13,10 @@
 		</property>
 		<property name="handlers">
 			<list>
-				<bean class="com.github.nezha.httpfetch.convertor.DefaultResponseGeneratorService" />
 			</list>
 		</property>
 		<property name="parameterResolvers">
 			<list>
-				<bean class="com.github.nezha.httpfetch.resolver.BeanMethodParameterResolver" />
-				<bean class="com.github.nezha.httpfetch.resolver.RequestBodyParameterResolver" />
-				<bean class="com.github.nezha.httpfetch.resolver.FileParameterResolver" />
-				<bean class="com.github.nezha.httpfetch.resolver.DefaultMethodParameterResolver" />
 			</list>
 		</property>
 		<property name="urlAlias">

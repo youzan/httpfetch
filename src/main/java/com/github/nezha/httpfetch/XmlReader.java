@@ -22,14 +22,14 @@ public class XmlReader implements SourceReader {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(XmlReader.class);
 
-    private final static String ELEMENT_INTERCEPTORS = "interceptors";
-    private final static String ELEMENT_INTERCEPTOR = "interceptor";
+    private final static String ELEMENT_CHAINS = "chains";
+    private final static String ELEMENT_CHAIN = "chain";
 
     private final static String ELEMENT_ARGUMENT_RESOLVERS = "argumentResolvers";
     private final static String ELEMENT_RESOLVER = "resolver";
 
-    private final static String ELEMENT_RETURN_HANDLERS = "returnHandlers";
-    private final static String ELEMENT_HANDLER = "handler";
+    private final static String ELEMENT_RESULT_CONVERTORS = "resultConvertors";
+    private final static String ELEMENT_CONVERTOR = "convertor";
 
     private final static String ELEMENT_ALIASES = "aliases";
     private final static String ELEMENT_ALIAS = "alias";
@@ -53,9 +53,7 @@ public class XmlReader implements SourceReader {
 
     private Map<String, String > urlAlias = new HashMap<>();
 
-    private List<String> paths;
-
-    public void init(){
+    public XmlReader(List<String> paths){
         if(!CommonUtils.isCollectionEmpty(paths)){
             for(String path : paths){
                 this.read(path);
@@ -81,7 +79,7 @@ public class XmlReader implements SourceReader {
 
         if (null!=root){
 
-            this.parseInterceptos(root);
+            this.parseChains(root);
 
             this.parseArgumentResolvers(root);
 
@@ -99,14 +97,16 @@ public class XmlReader implements SourceReader {
      * @throws IllegalAccessException 服务类初始化出错
      * @throws InstantiationException 服务类初始化出错
      */
-    private void parseInterceptos(Element root) {
+    private void parseChains(Element root) {
         try{
-            Element resolversEl = root.element(ELEMENT_INTERCEPTORS);
-            List<Element> resolverEl = resolversEl.elements(ELEMENT_INTERCEPTOR);
-            if(resolverEl != null && resolverEl.size() > 0){
-                for(Element e : resolverEl){
-                    Class<HttpApiChain> cls = (Class<HttpApiChain>) Class.forName(e.getStringValue());
-                    chains.add(cls.newInstance());
+            Element resolversEl = root.element(ELEMENT_CHAINS);
+            if(resolversEl != null){
+                List<Element> resolverEl = resolversEl.elements(ELEMENT_CHAIN);
+                if(resolverEl != null && resolverEl.size() > 0){
+                    for(Element e : resolverEl){
+                        Class<HttpApiChain> cls = (Class<HttpApiChain>) Class.forName(e.getStringValue());
+                        chains.add(cls.newInstance());
+                    }
                 }
             }
         }catch (Exception e){
@@ -126,11 +126,13 @@ public class XmlReader implements SourceReader {
     private void parseArgumentResolvers(Element root) {
         try{
             Element resolversEl = root.element(ELEMENT_ARGUMENT_RESOLVERS);
-            List<Element> resolverEl = resolversEl.elements(ELEMENT_RESOLVER);
-            if(resolverEl != null && resolverEl.size() > 0){
-                for(Element e : resolverEl){
-                    Class<MethodParameterResolver> cls = (Class<MethodParameterResolver>) Class.forName(e.getStringValue());
-                    parameterResolvers.add(cls.newInstance());
+            if(resolversEl != null){
+                List<Element> resolverEl = resolversEl.elements(ELEMENT_RESOLVER);
+                if(resolverEl != null && resolverEl.size() > 0){
+                    for(Element e : resolverEl){
+                        Class<MethodParameterResolver> cls = (Class<MethodParameterResolver>) Class.forName(e.getStringValue());
+                        parameterResolvers.add(cls.newInstance());
+                    }
                 }
             }
         }catch (Exception e){
@@ -149,12 +151,14 @@ public class XmlReader implements SourceReader {
      */
     private void parseReturnHandlers(Element root) {
         try{
-            Element returnHandlers = root.element(ELEMENT_RETURN_HANDLERS);
-            List<Element> handlerEl = returnHandlers.elements(ELEMENT_HANDLER);
-            if(handlerEl != null && handlerEl.size() > 0){
-                for(Element e : handlerEl){
-                    Class<ResponseGeneratorConvertor> cls = (Class<ResponseGeneratorConvertor>) Class.forName(e.getStringValue());
-                    handlers.add(cls.newInstance());
+            Element resultConvertors = root.element(ELEMENT_RESULT_CONVERTORS);
+            if(resultConvertors != null){
+                List<Element> convertorEl = resultConvertors.elements(ELEMENT_CONVERTOR);
+                if(convertorEl != null && convertorEl.size() > 0){
+                    for(Element e : convertorEl){
+                        Class<ResponseGeneratorConvertor> cls = (Class<ResponseGeneratorConvertor>) Class.forName(e.getStringValue());
+                        handlers.add(cls.newInstance());
+                    }
                 }
             }
         }catch (Exception e){
@@ -171,12 +175,14 @@ public class XmlReader implements SourceReader {
     private void parseUrlAlias(Element root) {
         try{
             Element aliasesEl = root.element(ELEMENT_ALIASES);
-            List<Element> aliasEl = aliasesEl.elements(ELEMENT_ALIAS);
-            if(aliasEl != null && aliasEl.size() > 0){
-                for(Element e : aliasEl){
-                    String key = e.attributeValue(ELEMENT_ALIAS_KEY);
-                    String value = e.attributeValue(ELEMENT_ALIAS_VALUE);
-                    urlAlias.put(key, value);
+            if(aliasesEl != null){
+                List<Element> aliasEl = aliasesEl.elements(ELEMENT_ALIAS);
+                if(aliasEl != null && aliasEl.size() > 0){
+                    for(Element e : aliasEl){
+                        String key = e.attributeValue(ELEMENT_ALIAS_KEY);
+                        String value = e.attributeValue(ELEMENT_ALIAS_VALUE);
+                        urlAlias.put(key, value);
+                    }
                 }
             }
         }catch (Exception e) {
@@ -206,11 +212,4 @@ public class XmlReader implements SourceReader {
         return urlAlias;
     }
 
-    public List<String> getPaths() {
-        return paths;
-    }
-
-    public void setPaths(List<String> paths) {
-        this.paths = paths;
-    }
 }

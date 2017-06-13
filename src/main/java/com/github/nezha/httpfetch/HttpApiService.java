@@ -32,20 +32,15 @@ public class HttpApiService {
     @PostConstruct
     public void init(){
         //创建调用链
-        List<HttpApiChain> chains = new ArrayList<>();
-        chains.add(new MethodWrapperChain(configuration));
-        chains.add(new UrlWrapperChain(configuration));
-        chains.add(new ParameterResolverChain(configuration));
-        chains.add(new GenerateResponseChain(configuration));
-        chains.add(new ExecuteRequestChain());
-
-        chains.addAll(configuration.getChains());
+        List<HttpApiChain> chains = configuration.getChains();
 
         //排序
         Collections.sort(chains, new Comparator<HttpApiChain>() {
             @Override
             public int compare(HttpApiChain o1, HttpApiChain o2) {
-                return o1.getOrder() - o2.getOrder();
+                int order1 = o1.getOrder();
+                int order2 = o2.getOrder();
+                return order2 > order1 ? 1 : -1;
             }
         });
 

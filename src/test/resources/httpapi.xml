@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <setting>
 
-    <interceptors>
-    </interceptors>
+    <!-- 请求链 -->
+    <chains>
+    </chains>
 
     <!-- 注册httpApi接口的参数处理类 -->
     <argumentResolvers>
-        <resolver>com.github.nezha.httpfetch.resolver.DefaultMethodParameterResolver</resolver>
     </argumentResolvers>
 
     <!-- 注册httpApi接口的结果处理类 -->
-    <returnHandlers>
-        <handler>com.github.nezha.httpfetch.handler.DefaultResponseGeneratorService</handler>
-    </returnHandlers>
+    <resultConvertors>
+    </resultConvertors>
 
     <aliases>
-        <alias key="createNewApi.make" value="/creative_new/make" />
+        <alias key="mbostockApi.getUsCongress" value="https://bl.ocks.org/mbostock/raw/4090846/us-congress-113.json" />
     </aliases>
 
 </setting>

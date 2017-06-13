@@ -4,8 +4,6 @@ import com.github.nezha.httpfetch.*;
 import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.Ordered;
-import org.springframework.core.PriorityOrdered;
 
 import java.lang.reflect.Method;
 import java.util.List;
