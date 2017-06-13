@@ -34,7 +34,7 @@
 		</property>
 	</bean>
 
-	<bean id="httpApiService" class="com.github.nezha.httpfetch.HttpApiService">
+	<bean id="httpApiService" class="com.github.nezha.httpfetch.HttpApiService" init-method="init">
 		<constructor-arg index="0" ref="httpApiConfiguration" />
 	</bean>
 

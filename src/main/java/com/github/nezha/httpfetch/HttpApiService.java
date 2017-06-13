@@ -1,15 +1,17 @@
 package com.github.nezha.httpfetch;
 
-import com.github.nezha.httpfetch.chains.*;
+import com.github.nezha.httpfetch.chains.HttpApiChain;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,7 +31,6 @@ public class HttpApiService {
         this.configuration = configuration;
     }
 
-    @PostConstruct
     public void init(){
         //创建调用链
         List<HttpApiChain> chains = configuration.getChains();
