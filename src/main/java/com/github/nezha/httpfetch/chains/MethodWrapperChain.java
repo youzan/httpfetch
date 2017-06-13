@@ -106,10 +106,10 @@ public class MethodWrapperChain implements HttpApiChain {
         for(int i=0;i<annotationArray.length;i++){
             //校验里面是否有param注解
             Annotation[] annotations = annotationArray[i];
-            HttpApiParam param = null;
+            QueryParam param = null;
             for(Annotation annotation : annotations){
-                if(HttpApiParam.class.isAssignableFrom(annotation.annotationType())){
-                    param = (HttpApiParam) annotation;
+                if(QueryParam.class.isAssignableFrom(annotation.annotationType())){
+                    param = (QueryParam) annotation;
                     break;
                 }
             }
@@ -129,9 +129,9 @@ public class MethodWrapperChain implements HttpApiChain {
 
     private Map<String, String> getHeaders(HttpApi anno){
         Map<String, String> headers = new HashMap<>();
-        HttpApiHeader[] headersAnno = anno.headers();
+        Header[] headersAnno = anno.headers();
         if(!CommonUtils.isArrayEmpty(headersAnno)){
-            for(HttpApiHeader header : headersAnno){
+            for(Header header : headersAnno){
                 if(header != null){
                     headers.put(header.key(), header.value());
                 }

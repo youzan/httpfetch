@@ -21,7 +21,7 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
     @Override
     public boolean supperts(HttpApiMethodWrapper wrapper, MethodParameter parameter) {
         //校验是否需要转换成byte[],供post请求体读取
-        if("POST".equals(wrapper.getMethod()) && parameter.hasAnnotation(HttpApiReqeustBody.class)){
+        if("POST".equals(wrapper.getMethod()) && parameter.hasAnnotation(ReqeustBody.class)){
             return true;
         }
         return false;

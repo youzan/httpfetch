@@ -1,6 +1,5 @@
 package com.github.nezha.httpfetch.mbostock.api;
 
-import com.alibaba.fastjson.JSON;
 import com.github.nezha.httpfetch.BaseTest;
 import com.github.nezha.httpfetch.mbostock.vo.UsCongressResponseVo;
 import com.github.nezha.httpfetch.spring.HttpApiBean;

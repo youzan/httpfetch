@@ -28,7 +28,7 @@ public @interface HttpApi {
 	 * http head
 	 * @return
      */
-	HttpApiHeader[] headers() default {};
+	Header[] headers() default {};
 
 	/**
 	 * 结果生产类,使用类的simpleName就行
