@@ -9,6 +9,7 @@
 	<bean id="springReader" class="com.github.nezha.httpfetch.spring.SpringReader" >
 		<property name="chains" >
 			<list>
+				<bean class="com.github.nezha.httpfetch.bookworm.chains.BookWormTokenChain" />
 			</list>
 		</property>
 		<property name="convertors">
