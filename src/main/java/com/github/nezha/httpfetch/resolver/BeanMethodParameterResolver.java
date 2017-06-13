@@ -75,7 +75,7 @@ public class BeanMethodParameterResolver implements MethodParameterResolver {
 				String name = field.getName();
 				try {
 					String paramName = paramNames.get(i);
-					Object value = field.equals(arg);
+					Object value = field.get(arg);
 					if(value != null){
 						Class<?> parameterCls = value.getClass();
 
