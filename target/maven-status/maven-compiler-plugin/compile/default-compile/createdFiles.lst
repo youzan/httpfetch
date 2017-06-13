@@ -4,12 +4,12 @@ com/github/nezha/httpfetch/resolver/FileParam.class
 com/github/nezha/httpfetch/spring/HttpApiBeanPostProcessor.class
 com/github/nezha/httpfetch/HttpApiInvoker.class
 com/github/nezha/httpfetch/HttpApi.class
-com/github/nezha/httpfetch/resolver/BeanMethodParameterResolver.class
+com/github/nezha/httpfetch/ParameterWrapper.class
 com/github/nezha/httpfetch/resolver/FileParameterResolver.class
-com/github/nezha/httpfetch/chains/MethodWrapperChain.class
 com/github/nezha/httpfetch/resolver/ArrayParam.class
 com/github/nezha/httpfetch/Header.class
 com/github/nezha/httpfetch/spring/SpringReader.class
+com/github/nezha/httpfetch/chains/BeanParamParseChain.class
 com/github/nezha/httpfetch/HttpApiRequestParam.class
 com/github/nezha/httpfetch/resolver/PostParam.class
 com/github/nezha/httpfetch/chains/ExecuteRequestChain.class
@@ -21,6 +21,7 @@ com/github/nezha/httpfetch/resolver/ReqeustBody.class
 com/github/nezha/httpfetch/resolver/RequestBodyParameterResolver.class
 com/github/nezha/httpfetch/spring/HttpApiBean.class
 com/github/nezha/httpfetch/convertor/ResponseGeneratorConvertor.class
+com/github/nezha/httpfetch/RequestParameter.class
 com/github/nezha/httpfetch/HttpApiService$1.class
 com/github/nezha/httpfetch/HttpApiService.class
 com/github/nezha/httpfetch/chains/ParameterResolverChain.class
@@ -30,11 +31,10 @@ com/github/nezha/httpfetch/resolver/DefaultMethodParameterResolver.class
 com/github/nezha/httpfetch/convertor/DefaultResponseGeneratorConvertor$DspResponseTypeReference.class
 com/github/nezha/httpfetch/HttpApiConfiguration.class
 com/github/nezha/httpfetch/chains/UrlWrapperChain.class
-com/github/nezha/httpfetch/resolver/BeanParam.class
 com/github/nezha/httpfetch/CommonUtils.class
 com/github/nezha/httpfetch/Invocation.class
 com/github/nezha/httpfetch/chains/GenerateResponseChain.class
 com/github/nezha/httpfetch/QueryParam.class
+com/github/nezha/httpfetch/chains/BeanParam.class
 com/github/nezha/httpfetch/HttpResult.class
-com/github/nezha/httpfetch/MethodParameter.class
 com/github/nezha/httpfetch/SourceReader.class

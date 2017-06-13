@@ -1,17 +1,16 @@
 package com.github.nezha.httpfetch;
 
 import com.github.nezha.httpfetch.chains.HttpApiChain;
+import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -26,6 +25,8 @@ public class HttpApiService {
     private HttpApiInvoker startInvoker = null;
 
     private Map<Class<?>, Object> serviceCache = new ConcurrentHashMap<>();
+
+    private Map<Method, HttpApiMethodWrapper> methodsCache = new HashMap<>();
 
     public HttpApiService(HttpApiConfiguration configuration){
         this.configuration = configuration;
@@ -106,14 +107,145 @@ public class HttpApiService {
         }
 
         public Object invoke(Object target, Method method, Method arg2, Object[] args) throws Throwable {
+
+            HttpApi httpApiAnno = method.getAnnotation(HttpApi.class);
+            if (httpApiAnno == null) {
+                //没有httpApi注解
+                throw new RuntimeException("系统异常,httpapi注解不存在!");
+            }
+
             Invocation invocation = new Invocation();
-            invocation.setRequestParam(new HttpApiRequestParam());
-            invocation.setArgs(args);
+            HttpApiMethodWrapper wrapper = getOrNewWrapper(method, httpApiAnno);
+            invocation.setWrapper(wrapper);
+
+            this.wrapRequestParameter(invocation, wrapper, args);
+
+            //设置请求参数
+            HttpApiRequestParam requestParam = new HttpApiRequestParam();
+            requestParam.setEncoding(wrapper.getEncoding());
+            requestParam.addHeaders(wrapper.getHeaders());
+            invocation.setRequestParam(requestParam);
+
             invocation.setMethod(method);
             invocation.setServiceCls(serviceCls);
+
             HttpResult httpResult = startInvoker.invoke(invocation);
             return httpResult.getData();
         }
+
+        private void wrapRequestParameter(Invocation invocation, HttpApiMethodWrapper wrapper, Object[] args){
+            //封装参数
+            if(!CommonUtils.isArrayEmpty(wrapper.getParameters())){
+                for(int i=0;i<wrapper.getParameters().length;i++){
+                    ParameterWrapper parameterWrapper = wrapper.getParameters()[i];
+                    invocation.addParameters(new RequestParameter(parameterWrapper, args[i]));
+                }
+            }
+        }
+
+        public HttpApiMethodWrapper getOrNewWrapper(Method method, HttpApi httpApiAnno){
+            HttpApiMethodWrapper wrapper;
+            if (methodsCache.containsKey(method)) {
+                wrapper = methodsCache.get(method);
+            } else {
+                wrapper = new HttpApiMethodWrapper();
+                wrapper.setMethod(httpApiAnno.method());
+                wrapper.setReturnCls(method.getReturnType());
+                wrapper.setAnnotations(method.getAnnotations());
+                wrapper.setEncoding(httpApiAnno.encoding());
+
+                //获取参数名称
+                ParameterWrapper[] parameters = wrapperPameters(method);
+                wrapper.setParameters(parameters);
+
+                //获取头参数
+                Map<String, String> headers = getHeaders(httpApiAnno);
+                wrapper.setHeaders(headers);
+
+                //查询指定的结果转换类获取结果转换服务类
+                ResponseGeneratorConvertor generatorService = null;
+                if (!CommonUtils.isStringEmpty(httpApiAnno.generator())) {
+                    for (ResponseGeneratorConvertor handler : configuration.getConvertors()) {
+                        if (httpApiAnno instanceof ResponseGeneratorConvertor){
+                            generatorService = handler;
+                            break;
+                        }
+                    }
+                }
+
+                wrapper.setGeneratorService(generatorService);
+
+                //去函数的返回类
+                wrapper.setResponseCls(method.getReturnType());
+
+                if (httpApiAnno.timeout() > 0) {
+                    wrapper.setTimeout(httpApiAnno.timeout());
+                }
+                if (httpApiAnno.readTimeout() > 0) {
+                    wrapper.setReadTimeout(httpApiAnno.readTimeout());
+                }
+
+                methodsCache.put(method, wrapper);
+            }
+            return wrapper;
+        }
+
+        /**
+         * 从methods中读取
+         * @param method
+         * @return
+         */
+        private ParameterWrapper[] wrapperPameters(Method method){
+            Annotation[][] annotationArray = method.getParameterAnnotations();
+            if(annotationArray == null || annotationArray.length == 0){
+                LOGGER.info("该函数没有参数！method [{}]", method.getName());
+                return new ParameterWrapper[]{};
+            }
+            String[] paramNames = new String[annotationArray.length];
+            for(int i=0;i<annotationArray.length;i++){
+                //校验里面是否有param注解
+                Annotation[] annotations = annotationArray[i];
+                QueryParam param = null;
+                for(Annotation annotation : annotations){
+                    if(QueryParam.class.isAssignableFrom(annotation.annotationType())){
+                        param = (QueryParam) annotation;
+                        break;
+                    }
+                }
+                if(param == null){
+                    paramNames[i] = "";
+                }else{
+                    paramNames[i] = param.value();
+                }
+            }
+
+            ParameterWrapper[] parameters = new ParameterWrapper[paramNames.length];
+            for(int i=0;i<paramNames.length;i++){
+                parameters[i] = new ParameterWrapper(
+                        method.getParameterTypes()[i], paramNames[i],
+                        method.getGenericParameterTypes()[i], annotationArray[i]);
+            }
+            return parameters;
+        }
+
+        /**
+         * 取注解上面的header
+         * @param anno
+         * @return
+         */
+        private Map<String, String> getHeaders(HttpApi anno){
+            Map<String, String> headers = new HashMap<>();
+            Header[] headersAnno = anno.headers();
+            if(!CommonUtils.isArrayEmpty(headersAnno)){
+                for(Header header : headersAnno){
+                    if(header != null){
+                        headers.put(header.key(), header.value());
+                    }
+                }
+            }
+            return headers;
+        }
+
     }
 
 }

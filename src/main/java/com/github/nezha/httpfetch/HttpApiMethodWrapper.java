@@ -15,7 +15,7 @@ public class HttpApiMethodWrapper {
 	/**
 	 * 参数封装bean
 	 */
-	private MethodParameter[] parameters;
+	private ParameterWrapper[] parameters;
 	
 	/**
 	 * 响应对象处理类
@@ -47,11 +47,11 @@ public class HttpApiMethodWrapper {
 
 	private String encoding;
 
-	public MethodParameter[] getParameters() {
+	public ParameterWrapper[] getParameters() {
 		return parameters;
 	}
 
-	public void setParameters(MethodParameter[] parameters) {
+	public void setParameters(ParameterWrapper[] parameters) {
 		this.parameters = parameters;
 	}
 

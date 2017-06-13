@@ -6,16 +6,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-public class MethodParameter {
-
-	/**
-	 * api函数对象
-	 */
-	private final Method method;
-	/**
-	 * 参数序号
-	 */
-	private final int parameterIndex;
+public class ParameterWrapper {
 	/**
 	 * 接口入参类型
 	 */
@@ -39,12 +30,12 @@ public class MethodParameter {
 	 */
 	private String paramName;
 
-	public MethodParameter(Method method, int parameterIndex, 
-			Class<?> parameterType, String paramName) {
-		this.method = method;
-		this.parameterIndex = parameterIndex;
+	public ParameterWrapper(Class<?> parameterType, String paramName,
+							Type genericParameterType, Annotation[] parameterAnnotations) {
 		this.parameterType = parameterType;
 		this.paramName = paramName;
+		this.genericParameterType = genericParameterType;
+		this.parameterAnnotations = parameterAnnotations;
 	}
 
 	/**
@@ -111,14 +102,6 @@ public class MethodParameter {
 
 	public void setParameterResolver(MethodParameterResolver parameterResolver) {
 		this.parameterResolver = parameterResolver;
-	}
-
-	public Method getMethod() {
-		return method;
-	}
-
-	public int getParameterIndex() {
-		return parameterIndex;
 	}
 
 	public String getParamName() {

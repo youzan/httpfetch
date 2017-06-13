@@ -1,4 +1,4 @@
-package com.github.nezha.httpfetch.resolver;
+package com.github.nezha.httpfetch.chains;
 
 import java.lang.annotation.*;
 

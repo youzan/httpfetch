@@ -1,9 +1,10 @@
 com/github/nezha/httpfetch/mbostock/api/MbostockApiTest.class
-com/github/nezha/httpfetch/mbostock/vo/DistrictsVo.class
 com/github/nezha/httpfetch/mbostock/vo/ObjectsVo.class
-com/github/nezha/httpfetch/mbostock/api/MbostockApiTest2.class
+com/github/nezha/httpfetch/CommonUtilsTest.class
 com/github/nezha/httpfetch/mbostock/vo/TransformVo.class
 com/github/nezha/httpfetch/BaseTest.class
 com/github/nezha/httpfetch/mbostock/api/MbostockApi.class
+com/github/nezha/httpfetch/mbostock/vo/DistrictsVo.class
+com/github/nezha/httpfetch/mbostock/api/MbostockApiTest2.class
 com/github/nezha/httpfetch/mbostock/vo/GeometriesVo.class
 com/github/nezha/httpfetch/mbostock/vo/UsCongressResponseVo.class

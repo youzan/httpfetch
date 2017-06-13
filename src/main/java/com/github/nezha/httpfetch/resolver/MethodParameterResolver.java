@@ -2,7 +2,7 @@ package com.github.nezha.httpfetch.resolver;
 
 import com.github.nezha.httpfetch.HttpApiMethodWrapper;
 import com.github.nezha.httpfetch.HttpApiRequestParam;
-import com.github.nezha.httpfetch.MethodParameter;
+import com.github.nezha.httpfetch.ParameterWrapper;
 
 /**
  * http参数解析器
@@ -16,7 +16,7 @@ public interface MethodParameterResolver {
 	 * @param parameter
 	 * @return true 支持 false 不支持
 	 */
-	boolean supperts(HttpApiMethodWrapper wrapper, MethodParameter parameter);
+	boolean supperts(HttpApiMethodWrapper wrapper, ParameterWrapper parameter);
 	
 	/**
 	 * 
@@ -29,7 +29,7 @@ public interface MethodParameterResolver {
 	 * @return
 	 */
 	void resolveArgument(HttpApiRequestParam param,
-						 MethodParameter parameter,
+						 ParameterWrapper parameter,
 						 HttpApiMethodWrapper wrapper, Object arg);
 	
 }

@@ -1,5 +1,6 @@
 package com.github.nezha.httpfetch;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,6 +41,27 @@ public class CommonUtils {
         }
     }
 
+    public static <T> T[] concatArray(T[]... arrays){
+        if(isArrayEmpty(arrays)){
+            return null;
+        }
+        int len = 0;
+        for(T[] array : arrays){
+            if(array != null){
+                len += array.length;
+            }
+        }
+
+        T[] newArray = (T[]) Array.newInstance(arrays[0].getClass().getComponentType(), len);
+        int idx = 0;
+        for(T[] array : arrays){
+            if(array != null){
+                System.arraycopy(array, 0, newArray, idx, array.length);
+                idx += array.length;
+            }
+        }
+        return newArray;
+    }
 
     /**
      * 获取所有的field 包括父类

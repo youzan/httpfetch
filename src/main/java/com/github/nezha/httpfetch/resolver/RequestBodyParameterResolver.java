@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.nezha.httpfetch.CommonUtils;
 import com.github.nezha.httpfetch.HttpApiMethodWrapper;
 import com.github.nezha.httpfetch.HttpApiRequestParam;
-import com.github.nezha.httpfetch.MethodParameter;
+import com.github.nezha.httpfetch.ParameterWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
     private final static Logger LOGGER = LoggerFactory.getLogger(RequestBodyParameterResolver.class);
 
     @Override
-    public boolean supperts(HttpApiMethodWrapper wrapper, MethodParameter parameter) {
+    public boolean supperts(HttpApiMethodWrapper wrapper, ParameterWrapper parameter) {
         //校验是否需要转换成byte[],供post请求体读取
         if("POST".equals(wrapper.getMethod()) && parameter.hasAnnotation(ReqeustBody.class)){
             return true;
@@ -28,9 +28,9 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
     }
 
     @Override
-    public void resolveArgument(HttpApiRequestParam param, MethodParameter methodParameter, HttpApiMethodWrapper wrapper, Object arg) {
+    public void resolveArgument(HttpApiRequestParam param, ParameterWrapper parameterWrapper, HttpApiMethodWrapper wrapper, Object arg) {
         //从param中取参数值
-        Class<?> parameterCls = methodParameter.getParameterType();
+        Class<?> parameterCls = parameterWrapper.getParameterType();
         if(parameterCls == null){
             return;
         }
@@ -57,7 +57,7 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
             param.setRequestBody(body);
         }
         //从param中删掉
-        param.removeGetParam(methodParameter.getParamName());
-        param.removePostParam(methodParameter.getParamName());
+        param.removeGetParam(parameterWrapper.getParamName());
+        param.removePostParam(parameterWrapper.getParamName());
     }
 }

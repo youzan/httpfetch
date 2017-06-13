@@ -60,14 +60,13 @@ public class HttpApiConfiguration {
         }
 
         //默认的链
-        chains.add(new MethodWrapperChain(this));
+        chains.add(new BeanParamParseChain());
         chains.add(new UrlWrapperChain(this));
         chains.add(new ParameterResolverChain(this));
         chains.add(new GenerateResponseChain(this));
         chains.add(new ExecuteRequestChain());
 
         //默认参数解析类
-        parameterResolvers.add(new BeanMethodParameterResolver());
         parameterResolvers.add(new RequestBodyParameterResolver());
         parameterResolvers.add(new FileParameterResolver());
         parameterResolvers.add(new DefaultMethodParameterResolver());

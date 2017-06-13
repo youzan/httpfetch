@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.nezha.httpfetch.CommonUtils;
 import com.github.nezha.httpfetch.HttpApiMethodWrapper;
 import com.github.nezha.httpfetch.HttpApiRequestParam;
-import com.github.nezha.httpfetch.MethodParameter;
+import com.github.nezha.httpfetch.ParameterWrapper;
 
 import java.io.File;
 
@@ -14,31 +14,31 @@ import java.io.File;
 public class DefaultMethodParameterResolver implements MethodParameterResolver {
 
 	@Override
-	public boolean supperts(HttpApiMethodWrapper wrapper, MethodParameter parameter) {
+	public boolean supperts(HttpApiMethodWrapper wrapper, ParameterWrapper parameter) {
 		return true;
 	}
 
 	@Override
 	public void resolveArgument(HttpApiRequestParam param,
-			MethodParameter methodParameter, HttpApiMethodWrapper wrapper,
-			Object arg) {
-		Class<?> parameterCls = methodParameter.getParameterType();
+								ParameterWrapper parameterWrapper, HttpApiMethodWrapper wrapper,
+								Object arg) {
+		Class<?> parameterCls = parameterWrapper.getParameterType();
 		if(parameterCls == null || arg == null){
 			return;
 		}
 
-		PostParam postParam = methodParameter.getAnnotation(PostParam.class);
-		FormParam formParam = methodParameter.getAnnotation(FormParam.class);
+		PostParam postParam = parameterWrapper.getAnnotation(PostParam.class);
+		FormParam formParam = parameterWrapper.getAnnotation(FormParam.class);
 		if(formParam != null) {
 			if(arg instanceof File){
-				param.addFormParam(methodParameter.getParamName(), arg);
+				param.addFormParam(parameterWrapper.getParamName(), arg);
 			}else{
-				param.addFormParam(methodParameter.getParamName(), parseParameter(arg));
+				param.addFormParam(parameterWrapper.getParamName(), parseParameter(arg));
 			}
 		}else if(postParam != null){
-			param.addPostParam(methodParameter.getParamName(), parseParameter(arg));
+			param.addPostParam(parameterWrapper.getParamName(), parseParameter(arg));
 		}else{
-			param.addGetParam(methodParameter.getParamName(), parseParameter(arg));
+			param.addGetParam(parameterWrapper.getParamName(), parseParameter(arg));
 		}
 	}
 

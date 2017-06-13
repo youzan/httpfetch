@@ -3,6 +3,8 @@ package com.github.nezha.httpfetch.chains;
 import com.github.nezha.httpfetch.*;
 import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
 
+import java.util.List;
+
 /**
  * Created by daiqiang on 17/6/13.
  */
@@ -18,32 +20,45 @@ public class ParameterResolverChain implements HttpApiChain {
     public HttpResult doChain(HttpApiInvoker invoker, Invocation invocation) {
         HttpApiMethodWrapper wrapper = invocation.getWrapper();
         HttpApiRequestParam requestParam = invocation.getRequestParam();
-        Object[] args = invocation.getArgs();
-        //封装成请求参数
-        MethodParameter[] parameters = wrapper.getParameters();
-        if(parameters != null){
-            for(int i=0;i<parameters.length;i++){
-                MethodParameter parameter = parameters[i];
-                MethodParameterResolver parameterResolversCache = parameter.getParameterResolver();
-                if(parameterResolversCache == null){
-                    //遍历已注册的入参处理类
-                    for(MethodParameterResolver parameterResolver : configuration.getParameterResolvers()){
-                        if(parameterResolver.supperts(wrapper, parameter)){
-                            //如果支持则注册到缓存中
-                            parameterResolversCache = parameterResolver;
-                            break;
-                        }
-                    }
+        List<RequestParameter> requestParameters = invocation.getParameters();
+        if(requestParameters != null){
+            for(RequestParameter requestParameter : requestParameters){
 
-                    parameter.setParameterResolver(parameterResolversCache);
-                }
+                ParameterWrapper parameterWrapper = requestParameter.getParameterWrapper();
+                Object parameter = requestParameter.getParameter();
+
+                MethodParameterResolver parameterResolversCache = choiseResolverAndCache(wrapper, parameterWrapper);
 
                 if(parameterResolversCache != null){
-                    parameterResolversCache.resolveArgument(requestParam, parameters[i], wrapper, args[i]);
+                    parameterResolversCache.resolveArgument(requestParam, parameterWrapper, wrapper, parameter);
                 }
+
             }
         }
         return invoker.invoke(invocation);
+    }
+
+    /**
+     * 选择或者缓存 参数解析类
+     * @param wrapper
+     * @param parameterWrapper
+     * @return
+     */
+    private MethodParameterResolver choiseResolverAndCache(HttpApiMethodWrapper wrapper, ParameterWrapper parameterWrapper){
+        MethodParameterResolver parameterResolversCache = parameterWrapper.getParameterResolver();
+        if(parameterResolversCache == null){
+            //遍历已注册的入参处理类
+            for(MethodParameterResolver parameterResolver : configuration.getParameterResolvers()){
+                if(parameterResolver.supperts(wrapper, parameterWrapper)){
+                    //如果支持则注册到缓存中
+                    parameterResolversCache = parameterResolver;
+                    break;
+                }
+            }
+
+            parameterWrapper.setParameterResolver(parameterResolversCache);
+        }
+        return parameterResolversCache;
     }
 
     @Override

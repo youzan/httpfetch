@@ -1,6 +1,8 @@
 package com.github.nezha.httpfetch;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by daiqiang on 17/6/13.
@@ -11,7 +13,10 @@ public class Invocation {
 
     private HttpApiMethodWrapper wrapper;
 
-    private Object[] args;
+    /**
+     * 参数封装bean
+     */
+    private List<RequestParameter> parameters = new ArrayList<>();
 
     private Method method;
 
@@ -33,14 +38,6 @@ public class Invocation {
         this.wrapper = wrapper;
     }
 
-    public Object[] getArgs() {
-        return args;
-    }
-
-    public void setArgs(Object[] args) {
-        this.args = args;
-    }
-
     public Method getMethod() {
         return method;
     }
@@ -55,6 +52,14 @@ public class Invocation {
 
     public void setServiceCls(Class<?> serviceCls) {
         this.serviceCls = serviceCls;
+    }
+
+    public List<RequestParameter> getParameters() {
+        return parameters;
+    }
+
+    public void addParameters(RequestParameter parameter) {
+        this.parameters.add(parameter);
     }
 
 }
