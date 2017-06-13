@@ -47,7 +47,7 @@ public class SpringReader implements SourceReader {
     }
 
 
-    public void setHandlers(List<ResponseGeneratorConvertor> convertors) {
+    public void setConvertors(List<ResponseGeneratorConvertor> convertors) {
         this.convertors = convertors;
     }
 

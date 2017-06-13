@@ -11,7 +11,7 @@
 			<list>
 			</list>
 		</property>
-		<property name="handlers">
+		<property name="convertors">
 			<list>
 			</list>
 		</property>
