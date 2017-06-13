@@ -46,8 +46,8 @@ public class HttpApiConfiguration {
                     if (reader.getChains() != null) {
                         chains.addAll(reader.getChains());
                     }
-                    if (reader.getHandlers() != null) {
-                        convertors.addAll(reader.getHandlers());
+                    if (reader.getConvertors() != null) {
+                        convertors.addAll(reader.getConvertors());
                     }
                     if (reader.getParameterResolvers() != null) {
                         parameterResolvers.addAll(reader.getParameterResolvers());

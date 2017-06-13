@@ -14,7 +14,7 @@ public interface SourceReader {
 
     List<HttpApiChain> getChains();
 
-    List<ResponseGeneratorConvertor> getHandlers();
+    List<ResponseGeneratorConvertor> getConvertors();
 
     List<MethodParameterResolver> getParameterResolvers();
 

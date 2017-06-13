@@ -16,7 +16,7 @@ public class SpringReader implements SourceReader {
 
     List<HttpApiChain> chains;
 
-    List<ResponseGeneratorConvertor> handlers;
+    List<ResponseGeneratorConvertor> convertors;
 
     List<MethodParameterResolver> parameterResolvers;
 
@@ -32,8 +32,8 @@ public class SpringReader implements SourceReader {
     }
 
     @Override
-    public List<ResponseGeneratorConvertor> getHandlers() {
-        return handlers;
+    public List<ResponseGeneratorConvertor> getConvertors() {
+        return convertors;
     }
 
     @Override
@@ -47,8 +47,8 @@ public class SpringReader implements SourceReader {
     }
 
 
-    public void setHandlers(List<ResponseGeneratorConvertor> handlers) {
-        this.handlers = handlers;
+    public void setHandlers(List<ResponseGeneratorConvertor> convertors) {
+        this.convertors = convertors;
     }
 
     public void setParameterResolvers(List<MethodParameterResolver> parameterResolvers) {

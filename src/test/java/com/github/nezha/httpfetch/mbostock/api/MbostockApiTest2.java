@@ -5,6 +5,7 @@ import com.github.nezha.httpfetch.HttpApiService;
 import com.github.nezha.httpfetch.SourceReader;
 import com.github.nezha.httpfetch.XmlReader;
 import com.github.nezha.httpfetch.mbostock.vo.UsCongressResponseVo;
+import org.junit.Test;
 
 import java.util.Arrays;
 
@@ -13,7 +14,8 @@ import java.util.Arrays;
  */
 public class MbostockApiTest2 {
 
-    public static void main(String[] args) {
+    @Test
+    public void test() {
         SourceReader xmlReader = new XmlReader(Arrays.asList("httpapi.xml"));
 
         HttpApiConfiguration configuration = new HttpApiConfiguration();

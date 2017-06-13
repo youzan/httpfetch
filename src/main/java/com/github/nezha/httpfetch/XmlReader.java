@@ -45,7 +45,7 @@ public class XmlReader implements SourceReader {
     /**
      * 结果集处理类，如果需要不同的结果转换时，可以继承并注册
      */
-    private List<ResponseGeneratorConvertor> handlers = new ArrayList<>();
+    private List<ResponseGeneratorConvertor> convertors = new ArrayList<>();
     /**
      * 入参处理类，如果需要扩展参数的转换方式时可以继承并注册
      */
@@ -157,7 +157,7 @@ public class XmlReader implements SourceReader {
                 if(convertorEl != null && convertorEl.size() > 0){
                     for(Element e : convertorEl){
                         Class<ResponseGeneratorConvertor> cls = (Class<ResponseGeneratorConvertor>) Class.forName(e.getStringValue());
-                        handlers.add(cls.newInstance());
+                        convertors.add(cls.newInstance());
                     }
                 }
             }
@@ -198,8 +198,8 @@ public class XmlReader implements SourceReader {
     }
 
     @Override
-    public List<ResponseGeneratorConvertor> getHandlers() {
-        return handlers;
+    public List<ResponseGeneratorConvertor> getConvertors() {
+        return convertors;
     }
 
     @Override
