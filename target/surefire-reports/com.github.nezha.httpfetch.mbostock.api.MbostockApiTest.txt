@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.github.nezha.httpfetch.mbostock.api.MbostockApiTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.101 sec
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.248 sec
