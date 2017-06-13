@@ -23,11 +23,6 @@ public class HttpApiMethodWrapper {
 	private ResponseGeneratorConvertor generatorService;
 	
 	/**
-	 * 请求url
-	 */
-	private String url;
-	
-	/**
 	 * api接口响应封装类/可以为空，则以返回类处理
 	 */
 	private Class<?> responseCls;
@@ -66,14 +61,6 @@ public class HttpApiMethodWrapper {
 
 	public void setGeneratorService(ResponseGeneratorConvertor generatorService) {
 		this.generatorService = generatorService;
-	}
-
-	public String getUrl() {
-		return url;
-	}
-
-	public void setUrl(String url) {
-		this.url = url;
 	}
 
 	public Class<?> getResponseCls() {

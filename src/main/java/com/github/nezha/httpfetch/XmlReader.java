@@ -1,7 +1,7 @@
 package com.github.nezha.httpfetch;
 
 import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
-import com.github.nezha.httpfetch.interceptor.HttpApiInterceptor;
+import com.github.nezha.httpfetch.chains.HttpApiChain;
 import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -39,7 +39,7 @@ public class XmlReader implements SourceReader {
     /**
      * 拦截器
      */
-    private List<HttpApiInterceptor> interceptors = new ArrayList<>();
+    private List<HttpApiChain> chains = new ArrayList<>();
 
 
     /**
@@ -105,8 +105,8 @@ public class XmlReader implements SourceReader {
             List<Element> resolverEl = resolversEl.elements(ELEMENT_INTERCEPTOR);
             if(resolverEl != null && resolverEl.size() > 0){
                 for(Element e : resolverEl){
-                    Class<HttpApiInterceptor> cls = (Class<HttpApiInterceptor>) Class.forName(e.getStringValue());
-                    interceptors.add(cls.newInstance());
+                    Class<HttpApiChain> cls = (Class<HttpApiChain>) Class.forName(e.getStringValue());
+                    chains.add(cls.newInstance());
                 }
             }
         }catch (Exception e){
@@ -187,8 +187,8 @@ public class XmlReader implements SourceReader {
     }
 
     @Override
-    public List<HttpApiInterceptor> getInterceptors() {
-        return interceptors;
+    public List<HttpApiChain> getChains() {
+        return chains;
     }
 
     @Override

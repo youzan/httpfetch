@@ -1,19 +1,15 @@
 package com.github.nezha.httpfetch;
 
-import com.alibaba.fastjson.JSON;
-import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
-import com.github.nezha.httpfetch.interceptor.HttpApiInterceptor;
-import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
+import com.github.nezha.httpfetch.chains.*;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,23 +21,39 @@ public class HttpApiService {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(HttpApiService.class);
 
-    private HttpApiServiceWrapper serviceWrapper = new HttpApiServiceWrapper();
+    private HttpApiConfiguration configuration;
 
-    private List<SourceReader> sourceReaders;
-
-    private Map<Method, HttpApiMethodWrapper> methodsCache = new HashMap<>();
+    private HttpApiInvoker startInvoker = null;
 
     private Map<Class<?>, Object> serviceCache = new ConcurrentHashMap<>();
 
+    public HttpApiService(HttpApiConfiguration configuration){
+        this.configuration = configuration;
+    }
+
     @PostConstruct
     public void init(){
-        if(!CommonUtils.isCollectionEmpty(sourceReaders)){
-            for(SourceReader sourceReader : sourceReaders){
-                serviceWrapper.addReader(sourceReader);
-            }
-        }
+        //创建调用链
+        List<HttpApiChain> chains = new ArrayList<>();
+        chains.add(new MethodWrapperChain(configuration));
+        chains.add(new UrlWrapperChain(configuration));
+        chains.add(new ParameterResolverChain(configuration));
+        chains.add(new GenerateResponseChain(configuration));
+        chains.add(new ExecuteRequestChain());
 
-        serviceWrapper.init();
+        chains.addAll(configuration.getChains());
+        HttpApiInvoker last = null;
+        for(int i= chains.size()-1;i>=0;i--){
+            final HttpApiChain chain = chains.get(i);
+            final HttpApiInvoker next = last;
+            last = new HttpApiInvoker(){
+                @Override
+                public HttpResult invoke(Invocation invocation) {
+                    return chain.doChain(next, invocation);
+                }
+            };
+        }
+        startInvoker = last;
     }
 
     public <T> T getOrCreateService(Class<T> serviceCls){
@@ -91,362 +103,14 @@ public class HttpApiService {
         }
 
         public Object invoke(Object target, Method method, Method arg2, Object[] args) throws Throwable {
-            HttpApiMethodWrapper wrapper;
-            if (methodsCache.containsKey(method)) {
-                wrapper = methodsCache.get(method);
-            } else {
-                //未缓存 重新封装
-                HttpApi httpApiAnno = method.getAnnotation(HttpApi.class);
-                if (httpApiAnno == null) {
-                    //不需要Http接口代理
-                    return method.invoke(serviceCls, args);
-                }
-                wrapper = new HttpApiMethodWrapper();
-                wrapper.setMethod(httpApiAnno.method());
-                wrapper.setReturnCls(method.getReturnType());
-                wrapper.setAnnotations(method.getAnnotations());
-                wrapper.setEncoding(httpApiAnno.encoding());
-
-                //通过code匹配url
-                wrapper.setUrl(getUrl(serviceCls, method));
-
-                //获取参数名称
-                MethodParameter[] parameters = wrapperPameters(method);
-                wrapper.setParameters(parameters);
-
-                //获取头参数
-                Map<String, String> headers = getHeaders(httpApiAnno);
-                wrapper.setHeaders(headers);
-
-                //查询指定的结果转换类获取结果转换服务类
-                ResponseGeneratorConvertor generatorService = null;
-                if (!CommonUtils.isStringEmpty(httpApiAnno.generator())) {
-                    for (ResponseGeneratorConvertor handler : serviceWrapper.getHandlers()) {
-                        if (httpApiAnno instanceof ResponseGeneratorConvertor){
-                            generatorService = handler;
-                            break;
-                        }
-                    }
-                }
-
-                wrapper.setGeneratorService(generatorService);
-
-                //去函数的返回类
-                wrapper.setResponseCls(method.getReturnType());
-
-                if (httpApiAnno.timeout() > 0) {
-                    wrapper.setTimeout(httpApiAnno.timeout());
-                }
-                if (httpApiAnno.readTimeout() > 0) {
-                    wrapper.setReadTimeout(httpApiAnno.readTimeout());
-                }
-
-                methodsCache.put(method, wrapper);
-            }
-
-            //封装成请求参数
-            HttpApiRequestParam requestParam = new HttpApiRequestParam(wrapper.getUrl());
-
-            //设置该函数默认encoding
-            requestParam.setEncoding(wrapper.getEncoding());
-
-            executePreHandler(wrapper, args, requestParam);
-
-            generateParameter(wrapper, args, requestParam);
-
-            //取header
-            requestParam.addHeaders(wrapper.getHeaders());
-
-            byte[] responseBytes = null;
-            try{
-                executePreRequest(wrapper, args, requestParam);
-                if(LOGGER.isInfoEnabled()){
-                    LOGGER.info("requestParam:"+ JSON.toJSONString(requestParam));
-                }
-                if ("POST".equals(wrapper.getMethod())) {
-                    responseBytes = HttpUtil.post(requestParam.getUrl(), requestParam.getGetParam(), requestParam.getPostParam(), requestParam.getFormParam(),
-                            requestParam.getRequestBody(), requestParam.getHeaders(), requestParam.getEncoding(),
-                            wrapper.getTimeout(), wrapper.getReadTimeout());
-                } else {
-                    responseBytes = HttpUtil.get(requestParam.getUrl(), requestParam.getGetParam(), requestParam.getHeaders(), wrapper.getTimeout(), wrapper.getReadTimeout());
-                }
-
-                //请求后置处理
-                responseBytes = executeAfterRequest(wrapper, args, requestParam, responseBytes);
-
-                //查询实现类
-                Object response = generateResponse(method, responseBytes, requestParam, wrapper);
-                response = wrapper.getReturnCls().cast(response);
-
-                //返回结果前处理
-                response = executeBeforeReturn(wrapper, args, requestParam, response);
-                return response;
-            }catch (Exception e){
-                LOGGER.error("请求调用时发生异常! method [{}] requestParam [{}]", method, JSON.toJSONString(requestParam), e);
-                Object response = executeCatchError(wrapper, args, requestParam, responseBytes, e);
-                if(response == null){
-                    //meiyou,抛出异常
-                    throw e;
-                }else{
-                    return response;
-                }
-            }
-        }
-
-
-        private Map<String, String> getHeaders(HttpApi anno){
-            Map<String, String> headers = new HashMap<>();
-            HttpApiHeader[] headersAnno = anno.headers();
-            if(!CommonUtils.isArrayEmpty(headersAnno)){
-                for(HttpApiHeader header : headersAnno){
-                    if(header != null){
-                        headers.put(header.key(), header.value());
-                    }
-                }
-            }
-            return headers;
-        }
-
-        /**
-         * 从methods中读取
-         * @param method
-         * @return
-         */
-        private MethodParameter[] wrapperPameters(Method method){
-            Annotation[][] annotationArray = method.getParameterAnnotations();
-            if(annotationArray == null || annotationArray.length == 0){
-                LOGGER.info("该函数没有参数！method [{}]", method.getName());
-                return new MethodParameter[]{};
-            }
-            String[] paramNames = new String[annotationArray.length];
-            for(int i=0;i<annotationArray.length;i++){
-                //校验里面是否有param注解
-                Annotation[] annotations = annotationArray[i];
-                HttpApiParam param = null;
-                for(Annotation annotation : annotations){
-                    if(HttpApiParam.class.isAssignableFrom(annotation.annotationType())){
-                        param = (HttpApiParam) annotation;
-                        break;
-                    }
-                }
-                if(param == null){
-                    paramNames[i] = "";
-                }else{
-                    paramNames[i] = param.value();
-                }
-            }
-
-            MethodParameter[] parameters = new MethodParameter[paramNames.length];
-            for(int i=0;i<paramNames.length;i++){
-                parameters[i] = wrapParameter(paramNames[i], i, method, annotationArray[i]);
-            }
-            return parameters;
-        }
-
-        /**
-         * 封装参数
-         * @param paramName
-         * @param index
-         * @param method
-         * @param annotations
-         * @return
-         */
-        private MethodParameter wrapParameter(String paramName, int index, Method method, Annotation[] annotations){
-            Class<?> parameterType = method.getParameterTypes()[index];
-            method.getParameterAnnotations();
-            MethodParameter parameter = new MethodParameter(method, index, parameterType, paramName);
-            parameter.setGenericParameterType(method.getGenericParameterTypes()[index]);
-            parameter.setParameterAnnotations(annotations);
-            return parameter;
-        }
-
-        /**
-         * 执行拦截器预处理
-         * @param wrapper
-         * @param args
-         * @param param
-         * @return
-         */
-        private void executePreHandler(HttpApiMethodWrapper wrapper, Object[] args, HttpApiRequestParam param) {
-            if(!CommonUtils.isCollectionEmpty(serviceWrapper.getInterceptors())){
-                for (HttpApiInterceptor interceptor: serviceWrapper.getInterceptors()) {
-                    if(interceptor != null){
-                        interceptor.preHandle(param, wrapper, args);
-                    }
-                }
-            }
-        }
-
-        /**
-         * 执行拦截器请求执行前的处理
-         * @param wrapper
-         * @param args
-         * @param param
-         * @return
-         */
-        private void executePreRequest(HttpApiMethodWrapper wrapper, Object[] args, HttpApiRequestParam param) {
-            if(!CommonUtils.isCollectionEmpty(serviceWrapper.getInterceptors())){
-                for (HttpApiInterceptor interceptor: serviceWrapper.getInterceptors()) {
-                    if(interceptor != null){
-                        interceptor.preRequest(param, wrapper, args);
-                    }
-                }
-            }
-        }
-
-        /**
-         * 执行拦截器请求执行后,并封装完结果后的处理
-         * @param wrapper
-         * @param args
-         * @param param
-         * @return
-         */
-        private byte[] executeAfterRequest(HttpApiMethodWrapper wrapper, Object[] args,
-                                           HttpApiRequestParam param, byte[] responseBytes) {
-            if(!CommonUtils.isCollectionEmpty(serviceWrapper.getInterceptors())){
-                for (HttpApiInterceptor interceptor: serviceWrapper.getInterceptors()) {
-                    if(interceptor != null){
-                        responseBytes = interceptor.afterRequest(param, wrapper, args, responseBytes);
-                    }
-                }
-            }
-            return responseBytes;
-        }
-
-        /**
-         * 返回结果前处理
-         * @param wrapper
-         * @param args
-         * @param param
-         * @param response
-         */
-        private Object executeBeforeReturn(HttpApiMethodWrapper wrapper, Object[] args,
-                                           HttpApiRequestParam param, Object response) {
-            if(!CommonUtils.isCollectionEmpty(serviceWrapper.getInterceptors())){
-                for (HttpApiInterceptor interceptor: serviceWrapper.getInterceptors()) {
-                    if(interceptor != null){
-                        response = interceptor.afterGenerateResponse(param, wrapper, args, response);
-                    }
-                }
-            }
-            return response;
-        }
-
-        /**
-         * 执行拦截器请求执行后,并封装完结果后的处理
-         * @param wrapper
-         * @param args
-         * @param param
-         * @return 捕捉异常后的返回值
-         */
-        private Object executeCatchError(HttpApiMethodWrapper wrapper, Object[] args,
-                                         HttpApiRequestParam param, byte[] responseBytes, Exception ex) {
-            if(!CommonUtils.isCollectionEmpty(serviceWrapper.getInterceptors())){
-                for (HttpApiInterceptor interceptor: serviceWrapper.getInterceptors()) {
-                    if(interceptor != null){
-                        Object response = interceptor.catchError(param, wrapper, args, responseBytes, ex);
-                        if(response != null){
-                            return response;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-        /**
-         * 将入参值解析成HTTP请求参数
-         * @param wrapper
-         * @param args
-         * @return
-         */
-        private void generateParameter(HttpApiMethodWrapper wrapper, Object[] args, HttpApiRequestParam param){
-            //封装成请求参数
-            MethodParameter[] parameters = wrapper.getParameters();
-            if(parameters != null){
-                for(int i=0;i<parameters.length;i++){
-                    MethodParameter parameter = parameters[i];
-                    MethodParameterResolver parameterResolversCache = parameter.getParameterResolver();
-                    if(parameterResolversCache == null){
-                        //遍历已注册的入参处理类
-                        for(MethodParameterResolver parameterResolver : serviceWrapper.getParameterResolvers()){
-                            if(parameterResolver.supperts(wrapper, parameter)){
-                                //如果支持则注册到缓存中
-                                parameterResolversCache = parameterResolver;
-                                break;
-                            }
-                        }
-
-                        parameter.setParameterResolver(parameterResolversCache);
-                    }
-
-                    if(parameterResolversCache != null){
-                        parameterResolversCache.resolveArgument(param, parameters[i], wrapper, args[i]);
-                    }
-                }
-            }
-        }
-
-        private Object generateResponse(Method method, byte[] response, HttpApiRequestParam requestParam, HttpApiMethodWrapper wrapper){
-            ResponseGeneratorConvertor service = wrapper.getGeneratorService();
-            Class<?> responseCls = wrapper.getResponseCls();
-            if(service != null){
-                return wrapper.getGeneratorService().generate(method, wrapper, requestParam, response, responseCls);
-            }else{
-                if(serviceWrapper.getHandlers() != null){
-                    for(ResponseGeneratorConvertor generatorService : serviceWrapper.getHandlers()){
-                        if(generatorService != null && generatorService.supports(method, wrapper, requestParam, responseCls)){
-                            return generatorService.generate(method, wrapper, requestParam, response, responseCls);
-                        }
-                    }
-                }
-            }
-            LOGGER.info("未找到可以用的结果处理类！method [%s] response [%s]", method.getName(), new String(response));
-            return null;
-        }
-
-        private String getUrl(Class<?> serviceCls, Method method){
-            HttpApi httpApi = method.getAnnotation(HttpApi.class);
-            if(!CommonUtils.isStringEmpty(httpApi.url())){
-                //如果注解中已经写明了url,则直接取 注解的url
-                return httpApi.url();
-            }
-            String code = httpApi.operateCode();
-            if(CommonUtils.isStringEmpty(code)){
-                //如果为空，则使用默认的操作码
-                String beanName = decapitalize(serviceCls.getSimpleName());
-                String methodName = method.getName();
-                code = beanName + "." + methodName;
-            }
-            Object urlObj = serviceWrapper.getUrlAlias().get(code);
-            if(urlObj == null){
-                String msg = String.format("url未找到! code [%s]", code);
-                LOGGER.error(msg);
-                throw new RuntimeException(msg);
-            }
-            return urlObj.toString();
-        }
-
-        public String decapitalize(String name) {
-            if (name == null || name.length() == 0) {
-                return name;
-            }
-            if (name.length() > 1 && Character.isUpperCase(name.charAt(1)) &&
-                    Character.isUpperCase(name.charAt(0))){
-                return name;
-            }
-            char chars[] = name.toCharArray();
-            chars[0] = Character.toLowerCase(chars[0]);
-            return new String(chars);
+            Invocation invocation = new Invocation();
+            invocation.setRequestParam(new HttpApiRequestParam());
+            invocation.setArgs(args);
+            invocation.setMethod(method);
+            invocation.setServiceCls(serviceCls);
+            HttpResult httpResult = startInvoker.invoke(invocation);
+            return httpResult.getData();
         }
     }
 
-
-    public List<SourceReader> getSourceReaders() {
-        return sourceReaders;
-    }
-
-    public void setSourceReaders(List<SourceReader> sourceReaders) {
-        this.sourceReaders = sourceReaders;
-    }
 }

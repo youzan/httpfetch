@@ -1,7 +1,7 @@
 package com.github.nezha.httpfetch;
 
 import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
-import com.github.nezha.httpfetch.interceptor.HttpApiInterceptor;
+import com.github.nezha.httpfetch.chains.HttpApiChain;
 import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.Map;
  */
 public interface SourceReader {
 
-    List<HttpApiInterceptor> getInterceptors();
+    List<HttpApiChain> getChains();
 
     List<ResponseGeneratorConvertor> getHandlers();
 

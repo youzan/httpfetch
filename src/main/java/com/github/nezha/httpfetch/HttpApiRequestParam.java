@@ -25,10 +25,6 @@ public class HttpApiRequestParam {
     @JSONField(serialize = false, deserialize = false)
     private byte[] requestBody;
 
-    public HttpApiRequestParam(String url){
-        this.url = url;
-    }
-
     public void addGetParam(String key, String value){
         getParam.put(key, value);
     }

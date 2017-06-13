@@ -1,6 +1,7 @@
-package com.github.nezha.httpfetch;
+package com.github.nezha.httpfetch.chains;
 
 import com.alibaba.fastjson.JSON;
+import com.github.nezha.httpfetch.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,48 +13,55 @@ import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.Map;
 
-
 /**
- * Created by xiaowa on 11/4/16.
+ * Created by daiqiang on 17/6/13.
+ * 最后发起http请求
  */
-public class HttpUtil {
+public class ExecuteRequestChain implements HttpApiChain {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(HttpUtil.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(ExecuteRequestChain.class);
 
-    public static byte[] get(String url, Map<String, String> getParam, Map<String, String> headers, Integer timeOut, Integer readTimeout) {
-        return httpRequest(new StringBuffer(url), "GET", getParam, null, headers, "UTF-8", timeOut, readTimeout);
+    @Override
+    public HttpResult doChain(HttpApiInvoker invoker, Invocation invocation) {
+        HttpApiMethodWrapper wrapper = invocation.getWrapper();
+        HttpApiRequestParam requestParam = invocation.getRequestParam();
+        if(LOGGER.isInfoEnabled()){
+            LOGGER.info("requestParam:"+ JSON.toJSONString(requestParam));
+        }
+        try{
+            return this.request(requestParam, wrapper);
+        }catch (Exception e){
+            LOGGER.error("请求调用时发生异常! method [{}] requestParam [{}]", invocation.getMethod(), JSON.toJSONString(requestParam), e);
+            HttpResult httpResult = new HttpResult();
+            httpResult.setException(e);
+            return httpResult;
+        }
     }
 
-    public static byte[] post(String url, Map<String, String> getParam, Map<String, String> postParam, Map<String, Object> formParam,
-                              byte[] body, Map<String, String> headers, String encoding,
-                              Integer timeOut, Integer readTimeout) {
-        return httpRequest(new StringBuffer(url), "POST", getParam, postParam, formParam, body, headers, encoding, timeOut, readTimeout);
-    }
 
     /**
      *
-     * @param url
-     * @param requestType
-     * @param getParam
-     * @param postParam   参数,如果有body则作为url后缀传递,如果没有body作为body传递
-     * @param formParam
-     * @param body
-     * @param headers
-     * @param encoding
-     * @param timeout
-     * @param readTimeout
+     * @param requestParam
      * @return
      * @throws IOException
      */
-    private static byte[] httpRequest(StringBuffer url, String requestType, Map<String, String> getParam, Map<String, String> postParam, Map<String, Object> formParam,
-                                     byte[] body, Map<String, String> headers, String encoding,
-                                     Integer timeout, Integer readTimeout) {
+    private HttpResult request(HttpApiRequestParam requestParam, HttpApiMethodWrapper wrapper) {
+        StringBuffer url = new StringBuffer(requestParam.getUrl());
+        String method = wrapper.getMethod();
+        Map<String, String> getParam = requestParam.getGetParam();
+        Map<String, String> postParam = requestParam.getPostParam();
+        Map<String, Object> formParam = requestParam.getFormParam();
+        byte[] body = requestParam.getRequestBody();
+        Map<String, String> headers = requestParam.getHeaders();
+        String encoding = requestParam.getEncoding();
+        Integer timeout = wrapper.getTimeout();
+        Integer readTimeout = wrapper.getReadTimeout();
         try{
             if (formParam == null || formParam.isEmpty()) {
                 //没有文件上传的form
                 //作为url后缀
                 String postParamUrl = convertMap2UrlParam(postParam, encoding, false);
-                if (body != null || !"POST".equals(requestType)) {
+                if (body != null || !"POST".equals(method)) {
                     //需要向输出流写所以
                     //param做为url后缀传递
                     if (url.indexOf("?") == -1) {
@@ -82,11 +90,12 @@ public class HttpUtil {
             throw new RuntimeException("发起请求时出错!", e);
         }
 
-        return httpRequest(url, requestType, getParam, body, headers, encoding, timeout, readTimeout);
+        return request(url, method, getParam, body, headers, encoding, timeout, readTimeout);
     }
+
     /**
      * @param url         地址
-     * @param requestType GET、POST、DELETE、INPUT等http提供的功能
+     * @param method GET、POST、DELETE、INPUT等http提供的功能
      * @param getParam    参数,始终做get参数传递
      * @param body        输出流的字节
      * @param headers     头
@@ -94,15 +103,15 @@ public class HttpUtil {
      * @param readTimeout 读取超时时间
      * @return
      */
-    private static byte[] httpRequest(StringBuffer url, String requestType, Map<String, String> getParam,
-                                      byte[] body, Map<String, String> headers, String encoding,
-                                      Integer timeout, Integer readTimeout) {
+    private HttpResult request(StringBuffer url, String method, Map<String, String> getParam,
+                               byte[] body, Map<String, String> headers, String encoding,
+                               Integer timeout, Integer readTimeout) {
 
 
         if (CommonUtils.isStringEmpty(url)) {
             throw new IllegalArgumentException("参数url为空!");
         }
-        if (!CommonUtils.isInLimit(requestType,
+        if (!CommonUtils.isInLimit(method,
                 "GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE")) {
             throw new IllegalArgumentException("参数requestType有误!");
         }
@@ -122,7 +131,7 @@ public class HttpUtil {
 
             try {
                 // 可以根据需要 提交 GET、POST、DELETE、INPUT等http提供的功能
-                conn.setRequestMethod(requestType);
+                conn.setRequestMethod(method);
             } catch (ProtocolException e) {
                 String msg = String.format("请求设置为POST方法时出错! url [%s] paramUrl [%s]", url, paramUrl);
                 LOGGER.error(msg, e);
@@ -176,7 +185,10 @@ public class HttpUtil {
                 baos.write(b, 0, len);
             }
             is.close();
-            return baos.toByteArray();
+            HttpResult result = new HttpResult();
+            result.setStatusCode(conn.getResponseCode());
+            result.setData(baos.toByteArray());
+            return result;
         } catch (Exception e) {
             LOGGER.error("发起请求时出错!", "url", url);
             throw new RuntimeException("发起请求时出错!", e);
@@ -198,7 +210,7 @@ public class HttpUtil {
         }
     }
 
-    private static String convertMap2UrlParam(Map<String, String> params, String encoding, boolean needEncode) throws UnsupportedEncodingException {
+    private String convertMap2UrlParam(Map<String, String> params, String encoding, boolean needEncode) throws UnsupportedEncodingException {
         if (params != null && !params.isEmpty()) {
             StringBuffer paramUrl = new StringBuffer();
             Iterator<Map.Entry<String, String>> it = params.entrySet().iterator();
@@ -220,7 +232,7 @@ public class HttpUtil {
         return "";
     }
 
-    private static void writeWithFormParams( Map<String, Object> formParam, String boundary, String encoding, ByteArrayOutputStream os) throws IOException {
+    private void writeWithFormParams( Map<String, Object> formParam, String boundary, String encoding, ByteArrayOutputStream os) throws IOException {
         Iterator<Map.Entry<String, Object>> iterator = formParam.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, Object> entry = iterator.next();
@@ -247,11 +259,11 @@ public class HttpUtil {
         writeBytes("--" + boundary + "--\r\n", encoding, os);
     }
 
-    private static void writeBytes(String content, String encoding, ByteArrayOutputStream os) throws IOException {
+    private void writeBytes(String content, String encoding, ByteArrayOutputStream os) throws IOException {
         os.write(content.getBytes(encoding));
     }
 
-    private static void writeBytes(File content, ByteArrayOutputStream os) {
+    private void writeBytes(File content, ByteArrayOutputStream os) {
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(content);
@@ -273,5 +285,4 @@ public class HttpUtil {
             }
         }
     }
-
 }

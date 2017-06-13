@@ -7,7 +7,7 @@
 	    ">
 
 	<bean id="springReader" class="com.github.nezha.httpfetch.spring.SpringReader" >
-		<property name="interceptors">
+		<property name="chains" >
 			<list>
 			</list>
 		</property>
@@ -31,12 +31,16 @@
 		</property>
 	</bean>
 
-	<bean id="httpApiService" class="com.github.nezha.httpfetch.HttpApiService">
+	<bean id="httpApiConfiguration" class="com.github.nezha.httpfetch.HttpApiConfiguration" init-method="init">
 		<property name="sourceReaders">
 			<list>
-				<ref bean="springReader"/>
+				<ref bean="springReader" />
 			</list>
 		</property>
+	</bean>
+
+	<bean id="httpApiService" class="com.github.nezha.httpfetch.HttpApiService">
+		<constructor-arg index="0" ref="httpApiConfiguration" />
 	</bean>
 
 	<bean class="com.github.nezha.httpfetch.spring.HttpApiBeanPostProcessor">

@@ -3,7 +3,7 @@ package com.github.nezha.httpfetch.spring;
 
 import com.github.nezha.httpfetch.SourceReader;
 import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
-import com.github.nezha.httpfetch.interceptor.HttpApiInterceptor;
+import com.github.nezha.httpfetch.chains.HttpApiChain;
 import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
 
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class SpringReader implements SourceReader {
 
-    List<HttpApiInterceptor> interceptors;
+    List<HttpApiChain> chains;
 
     List<ResponseGeneratorConvertor> handlers;
 
@@ -23,8 +23,12 @@ public class SpringReader implements SourceReader {
     Map<String, String> urlAlias;
 
     @Override
-    public List<HttpApiInterceptor> getInterceptors() {
-        return interceptors;
+    public List<HttpApiChain> getChains() {
+        return chains;
+    }
+
+    public void setChains(List<HttpApiChain> chains) {
+        this.chains = chains;
     }
 
     @Override
@@ -42,9 +46,6 @@ public class SpringReader implements SourceReader {
         return urlAlias;
     }
 
-    public void setInterceptors(List<HttpApiInterceptor> interceptors) {
-        this.interceptors = interceptors;
-    }
 
     public void setHandlers(List<ResponseGeneratorConvertor> handlers) {
         this.handlers = handlers;

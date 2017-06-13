@@ -1,7 +1,7 @@
 package com.github.nezha.httpfetch;
 
 import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
-import com.github.nezha.httpfetch.interceptor.HttpApiInterceptor;
+import com.github.nezha.httpfetch.chains.HttpApiChain;
 import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
 
 import java.util.ArrayList;
@@ -12,14 +12,14 @@ import java.util.Map;
 /**
  * Created by daiqiang on 16/12/6.
  */
-public class HttpApiServiceWrapper {
+public class HttpApiConfiguration {
 
     private List<SourceReader> sourceReaders = new ArrayList<>();
 
     /**
      * 请求拦截器,做切面处理
      */
-    private List<HttpApiInterceptor> interceptors = new ArrayList<>();
+    private List<HttpApiChain> chains = new ArrayList<>();
 
     /**
      * 结果集处理类，如果需要不同的结果转换时，可以继承并注册
@@ -33,16 +33,12 @@ public class HttpApiServiceWrapper {
 
     private Map<String, String> urlAlias = new HashMap<>();
 
-    public void addReader(SourceReader reader) {
-        sourceReaders.add(reader);
-    }
-
     public void init() {
         if (!sourceReaders.isEmpty()) {
             for (SourceReader reader : sourceReaders) {
                 if (reader != null) {
-                    if (reader.getInterceptors() != null) {
-                        interceptors.addAll(reader.getInterceptors());
+                    if (reader.getChains() != null) {
+                        chains.addAll(reader.getChains());
                     }
                     if (reader.getHandlers() != null) {
                         handlers.addAll(reader.getHandlers());
@@ -58,11 +54,11 @@ public class HttpApiServiceWrapper {
         }
     }
 
-    public List<HttpApiInterceptor> getInterceptors() {
-        return interceptors;
+    public List<HttpApiChain> getChains() {
+        return chains;
     }
 
-    public List<ResponseGeneratorConvertor> getHandlers() {
+    public List<ResponseGeneratorConvertor> getConvertors() {
         return handlers;
     }
 
@@ -77,4 +73,9 @@ public class HttpApiServiceWrapper {
     public List<SourceReader> getSourceReaders() {
         return sourceReaders;
     }
+
+    public void setSourceReaders(List<SourceReader> sourceReaders) {
+        this.sourceReaders = sourceReaders;
+    }
+
 }
