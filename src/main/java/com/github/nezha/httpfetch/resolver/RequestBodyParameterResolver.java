@@ -1,10 +1,7 @@
 package com.github.nezha.httpfetch.resolver;
 
 import com.alibaba.fastjson.JSONObject;
-import com.github.nezha.httpfetch.CommonUtils;
-import com.github.nezha.httpfetch.HttpApiMethodWrapper;
-import com.github.nezha.httpfetch.HttpApiRequestParam;
-import com.github.nezha.httpfetch.ParameterWrapper;
+import com.github.nezha.httpfetch.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,21 +16,24 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
     private final static Logger LOGGER = LoggerFactory.getLogger(RequestBodyParameterResolver.class);
 
     @Override
-    public boolean supperts(HttpApiMethodWrapper wrapper, ParameterWrapper parameter) {
+    public boolean supperts(HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
         //校验是否需要转换成byte[],供post请求体读取
-        if("POST".equals(wrapper.getMethod()) && parameter.hasAnnotation(ReqeustBody.class)){
+        boolean isPostRequest = "POST".equals(wrapper.getMethod());
+        boolean hasRequestBodyAnno = requestParameter.getParameterWrapper().hasAnnotation(RequestBody.class);
+        if(isPostRequest && hasRequestBodyAnno){
             return true;
         }
         return false;
     }
 
     @Override
-    public void resolveArgument(HttpApiRequestParam param, ParameterWrapper parameterWrapper, HttpApiMethodWrapper wrapper, Object arg) {
+    public void resolveArgument(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
         //从param中取参数值
-        Class<?> parameterCls = parameterWrapper.getParameterType();
+        Class<?> parameterCls = requestParameter.getParameterWrapper().getParameterType();
         if(parameterCls == null){
             return;
         }
+        Object arg = requestParameter.getParameter();
         String value;
         if(String.class.isAssignableFrom(parameterCls)){
             value = arg.toString();
@@ -54,10 +54,7 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
                 LOGGER.error(msg, e);
                 throw new RuntimeException(msg, e);
             }
-            param.setRequestBody(body);
+            requestParameter.setParameter(body);
         }
-        //从param中删掉
-        param.removeGetParam(parameterWrapper.getParamName());
-        param.removePostParam(parameterWrapper.getParamName());
     }
 }

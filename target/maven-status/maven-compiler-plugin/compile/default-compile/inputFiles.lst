@@ -1,7 +1,7 @@
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/spring/HttpApiBeanPostProcessor.java
-/Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/resolver/FileParameterResolver.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/HttpApiRequestParam.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/HttpApi.java
+/Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/resolver/RequestParamWrapResolver.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/QueryParam.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/chains/ExecuteRequestChain.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/chains/HttpApiChain.java
@@ -17,11 +17,10 @@
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/chains/ParameterResolverChain.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/XmlReader.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/convertor/ResponseGeneratorConvertor.java
-/Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/resolver/FileParam.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/chains/BeanParam.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/HttpApiService.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/ParameterWrapper.java
-/Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/resolver/ReqeustBody.java
+/Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/resolver/RequestBody.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/HttpApiMethodWrapper.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/HttpApiInvoker.java
 /Users/daiqiang/Documents/workspace/workspace_github/httpfetch/src/main/java/com/github/nezha/httpfetch/resolver/RequestBodyParameterResolver.java

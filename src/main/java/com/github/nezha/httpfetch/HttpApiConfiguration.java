@@ -68,8 +68,8 @@ public class HttpApiConfiguration {
 
         //默认参数解析类
         parameterResolvers.add(new RequestBodyParameterResolver());
-        parameterResolvers.add(new FileParameterResolver());
         parameterResolvers.add(new DefaultMethodParameterResolver());
+        parameterResolvers.add(new RequestParamWrapResolver());
 
         //默认结果解析器
         convertors.add(new DefaultResponseGeneratorConvertor());

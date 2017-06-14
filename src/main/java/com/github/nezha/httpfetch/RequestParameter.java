@@ -22,4 +22,8 @@ public class RequestParameter {
     public Object getParameter() {
         return parameter;
     }
+
+    public void setParameter(Object parameter) {
+        this.parameter = parameter;
+    }
 }

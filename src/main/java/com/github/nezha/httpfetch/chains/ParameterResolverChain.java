@@ -22,43 +22,32 @@ public class ParameterResolverChain implements HttpApiChain {
         HttpApiRequestParam requestParam = invocation.getRequestParam();
         List<RequestParameter> requestParameters = invocation.getParameters();
         if(requestParameters != null){
+            //遍历所有的参数
             for(RequestParameter requestParameter : requestParameters){
-
-                ParameterWrapper parameterWrapper = requestParameter.getParameterWrapper();
-                Object parameter = requestParameter.getParameter();
-
-                MethodParameterResolver parameterResolversCache = choiseResolverAndCache(wrapper, parameterWrapper);
-
-                if(parameterResolversCache != null){
-                    parameterResolversCache.resolveArgument(requestParam, parameterWrapper, wrapper, parameter);
-                }
-
+                choiseAndExecuteResolver(requestParam, wrapper, requestParameter);
             }
         }
         return invoker.invoke(invocation);
     }
 
     /**
-     * 选择或者缓存 参数解析类
+     * 筛选并执行resolver解析参数
      * @param wrapper
-     * @param parameterWrapper
+     * @param requestParameter
      * @return
      */
-    private MethodParameterResolver choiseResolverAndCache(HttpApiMethodWrapper wrapper, ParameterWrapper parameterWrapper){
+    private void choiseAndExecuteResolver(HttpApiRequestParam requestParam, HttpApiMethodWrapper wrapper, RequestParameter requestParameter){
+        ParameterWrapper parameterWrapper = requestParameter.getParameterWrapper();
         MethodParameterResolver parameterResolversCache = parameterWrapper.getParameterResolver();
         if(parameterResolversCache == null){
             //遍历已注册的入参处理类
             for(MethodParameterResolver parameterResolver : configuration.getParameterResolvers()){
-                if(parameterResolver.supperts(wrapper, parameterWrapper)){
+                if(parameterResolver.supperts(wrapper, requestParameter)){
                     //如果支持则注册到缓存中
-                    parameterResolversCache = parameterResolver;
-                    break;
+                    parameterResolver.resolveArgument(requestParam, wrapper, requestParameter);
                 }
             }
-
-            parameterWrapper.setParameterResolver(parameterResolversCache);
         }
-        return parameterResolversCache;
     }
 
     @Override

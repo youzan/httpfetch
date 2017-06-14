@@ -1,10 +1,7 @@
 package com.github.nezha.httpfetch.resolver;
 
 import com.alibaba.fastjson.JSONObject;
-import com.github.nezha.httpfetch.CommonUtils;
-import com.github.nezha.httpfetch.HttpApiMethodWrapper;
-import com.github.nezha.httpfetch.HttpApiRequestParam;
-import com.github.nezha.httpfetch.ParameterWrapper;
+import com.github.nezha.httpfetch.*;
 
 import java.io.File;
 
@@ -14,32 +11,24 @@ import java.io.File;
 public class DefaultMethodParameterResolver implements MethodParameterResolver {
 
 	@Override
-	public boolean supperts(HttpApiMethodWrapper wrapper, ParameterWrapper parameter) {
+	public boolean supperts(HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
 		return true;
 	}
 
 	@Override
-	public void resolveArgument(HttpApiRequestParam param,
-								ParameterWrapper parameterWrapper, HttpApiMethodWrapper wrapper,
-								Object arg) {
-		Class<?> parameterCls = parameterWrapper.getParameterType();
-		if(parameterCls == null || arg == null){
+	public void resolveArgument(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
+		ParameterWrapper parameterWrapper = requestParameter.getParameterWrapper();
+		Object arg = requestParameter.getParameter();
+		if(parameterWrapper.getParameterType() == null || arg == null){
 			return;
 		}
 
-		PostParam postParam = parameterWrapper.getAnnotation(PostParam.class);
-		FormParam formParam = parameterWrapper.getAnnotation(FormParam.class);
-		if(formParam != null) {
-			if(arg instanceof File){
-				param.addFormParam(parameterWrapper.getParamName(), arg);
-			}else{
-				param.addFormParam(parameterWrapper.getParamName(), parseParameter(arg));
-			}
-		}else if(postParam != null){
-			param.addPostParam(parameterWrapper.getParamName(), parseParameter(arg));
+		if(arg instanceof File){
+			requestParameter.setParameter(arg);
 		}else{
-			param.addGetParam(parameterWrapper.getParamName(), parseParameter(arg));
+			requestParameter.setParameter(parseParameter(arg));
 		}
+
 	}
 
 	private String parseParameter(Object value){
