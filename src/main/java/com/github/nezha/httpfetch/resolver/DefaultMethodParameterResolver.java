@@ -28,7 +28,6 @@ public class DefaultMethodParameterResolver implements MethodParameterResolver {
 		}else{
 			requestParameter.setParameter(parseParameter(arg));
 		}
-
 	}
 
 	private String parseParameter(Object value){

@@ -1,7 +1,10 @@
 package com.github.nezha.httpfetch.chains;
 
 import com.github.nezha.httpfetch.*;
+import com.github.nezha.httpfetch.resolver.FormParam;
 import com.github.nezha.httpfetch.resolver.MethodParameterResolver;
+import com.github.nezha.httpfetch.resolver.PostParam;
+import com.github.nezha.httpfetch.resolver.RequestBody;
 
 import java.util.List;
 
@@ -24,10 +27,32 @@ public class ParameterResolverChain implements HttpApiChain {
         if(requestParameters != null){
             //遍历所有的参数
             for(RequestParameter requestParameter : requestParameters){
-                choiseAndExecuteResolver(requestParam, wrapper, requestParameter);
+                MethodParameterResolver resolver = choiseResolver(wrapper, requestParameter);
+                if(resolver != null){
+                    resolver.resolveArgument(requestParam, wrapper, requestParameter);
+                }
+
+                this.wrapRequestParam(requestParameter, requestParam);
             }
         }
         return invoker.invoke(invocation);
+    }
+
+    private void wrapRequestParam(RequestParameter requestParameter, HttpApiRequestParam requestParam){
+        //封装请求参数
+        ParameterWrapper parameterWrapper = requestParameter.getParameterWrapper();
+        Object arg = requestParameter.getParameter();
+        if(parameterWrapper.hasAnnotation(FormParam.class)){
+            requestParam.addFormParam(parameterWrapper.getParamName(), arg);
+        }else if(parameterWrapper.hasAnnotation(PostParam.class)){
+            requestParam.addPostParam(parameterWrapper.getParamName(), String.valueOf(arg));
+        }else if(parameterWrapper.hasAnnotation(RequestBody.class)
+                && arg.getClass().isArray()
+                && arg.getClass().getComponentType().equals(byte.class)){
+            requestParam.setRequestBody((byte[]) arg);
+        }else{
+            requestParam.addGetParam(parameterWrapper.getParamName(), String.valueOf(arg));
+        }
     }
 
     /**
@@ -36,18 +61,16 @@ public class ParameterResolverChain implements HttpApiChain {
      * @param requestParameter
      * @return
      */
-    private void choiseAndExecuteResolver(HttpApiRequestParam requestParam, HttpApiMethodWrapper wrapper, RequestParameter requestParameter){
+    private MethodParameterResolver choiseResolver(HttpApiMethodWrapper wrapper, RequestParameter requestParameter){
         ParameterWrapper parameterWrapper = requestParameter.getParameterWrapper();
-        MethodParameterResolver parameterResolversCache = parameterWrapper.getParameterResolver();
-        if(parameterResolversCache == null){
-            //遍历已注册的入参处理类
-            for(MethodParameterResolver parameterResolver : configuration.getParameterResolvers()){
-                if(parameterResolver.supperts(wrapper, requestParameter)){
-                    //如果支持则注册到缓存中
-                    parameterResolver.resolveArgument(requestParam, wrapper, requestParameter);
-                }
+        //遍历已注册的入参处理类
+        for(MethodParameterResolver parameterResolver : configuration.getParameterResolvers()){
+            if(parameterResolver.supperts(wrapper, requestParameter)){
+                //如果支持则注册到缓存中
+                return parameterResolver;
             }
         }
+        return null;
     }
 
     @Override
