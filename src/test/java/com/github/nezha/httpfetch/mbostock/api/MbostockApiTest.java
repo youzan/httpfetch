@@ -2,15 +2,15 @@ package com.github.nezha.httpfetch.mbostock.api;
 
 import com.github.nezha.httpfetch.BaseTest;
 import com.github.nezha.httpfetch.mbostock.vo.UsCongressResponseVo;
-import com.github.nezha.httpfetch.spring.HttpApiBean;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Created by daiqiang on 17/6/8.
  */
 public class MbostockApiTest extends BaseTest {
 
-    @HttpApiBean
+    @Autowired
     private MbostockApi mbostockApi;
 
     @Test

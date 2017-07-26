@@ -2,16 +2,18 @@ package com.github.nezha.httpfetch.chains;
 
 import com.alibaba.fastjson.JSON;
 import com.github.nezha.httpfetch.*;
+import com.github.nezha.httpfetch.resolver.ImageParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -241,13 +243,39 @@ public class ExecuteRequestChain implements HttpApiChain {
             String name = entry.getKey();
             Object value = entry.getValue();
             if (!CommonUtils.isStringEmpty(name)) {
-                if(value instanceof File){
-                    File file = (File)value;
+                if(value instanceof File) {
+                    File file = (File) value;
                     writeBytes("--" + boundary + "\r\n", encoding, os);
                     writeBytes("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + URLEncoder.encode(file.getName(), encoding) + "\"\r\n", encoding, os);
                     writeBytes("Content-Type: application/octet-stream\r\n", encoding, os);
                     writeBytes("\r\n", encoding, os);
                     writeBytes(file, os);
+                    writeBytes("\r\n", encoding, os);
+                }else if(value instanceof URL){
+                    URL url = (URL)value;
+                    writeBytes("--" + boundary + "\r\n", encoding, os);
+                    String fileName;
+                    if(url.getFile().lastIndexOf("/")+1 < url.getFile().length()){
+                        fileName = url.getFile().substring(url.getFile().lastIndexOf("/")+1);
+                    }else{
+                        fileName = "";
+                    }
+                    writeBytes("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + URLEncoder.encode(fileName, encoding) + "\"\r\n", encoding, os);
+                    writeBytes("Content-Type: application/octet-stream\r\n", encoding, os);
+                    writeBytes("\r\n", encoding, os);
+                    writeBytes(url, os);
+                    writeBytes("\r\n", encoding, os);
+                }else if(value instanceof ImageParam){
+                    ImageParam imageParam = (ImageParam)value;
+                    if(imageParam.getImage() == null){
+                        throw new IllegalArgumentException("the parameter image is null");
+                    }
+                    writeBytes("--" + boundary + "\r\n", encoding, os);
+                    String imageName = imageParam.getImageName();
+                    writeBytes("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + URLEncoder.encode(imageName, encoding) + "\"\r\n", encoding, os);
+                    writeBytes("Content-Type: application/octet-stream\r\n", encoding, os);
+                    writeBytes("\r\n", encoding, os);
+                    writeBytes(imageParam.getImage(), imageName, os);
                     writeBytes("\r\n", encoding, os);
                 }else{
                     writeBytes("--" + boundary + "\r\n", encoding, os);
@@ -259,6 +287,11 @@ public class ExecuteRequestChain implements HttpApiChain {
             }
         }
         writeBytes("--" + boundary + "--\r\n", encoding, os);
+    }
+
+    private void writeBytes(BufferedImage image, String imageName, ByteArrayOutputStream os) throws IOException {
+        String formatName = imageName.substring(imageName.lastIndexOf(".")+1);
+        ImageIO.write(image, formatName.toUpperCase(), os);
     }
 
     private void writeBytes(String content, String encoding, ByteArrayOutputStream os) throws IOException {
@@ -282,6 +315,31 @@ public class ExecuteRequestChain implements HttpApiChain {
                     fis.close();
                 } catch (IOException e) {
                     String msg = "文件流关闭失败! fileName ["+content.getName()+"]";
+                    throw new RuntimeException(msg);
+                }
+            }
+        }
+    }
+
+    private void writeBytes(URL url, ByteArrayOutputStream os) {
+        InputStream is = null;
+        try {
+            URLConnection urlConnection = url.openConnection();
+            urlConnection.setDoInput(true);
+            is = urlConnection.getInputStream();
+            int len;
+            byte[] b = new byte[1024];
+            while ((len = is.read(b)) != -1) {
+                os.write(b, 0, len);
+            }
+        } catch (Exception e) {
+            LOGGER.error("读取文件出错!", e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    String msg = "文件流关闭失败! fileName ["+url.getFile()+"]";
                     throw new RuntimeException(msg);
                 }
             }

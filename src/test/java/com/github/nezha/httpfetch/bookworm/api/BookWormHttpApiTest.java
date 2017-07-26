@@ -4,8 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.github.nezha.httpfetch.BaseTest;
 import com.github.nezha.httpfetch.bookworm.vo.UploadFileRequestVo;
 import com.github.nezha.httpfetch.bookworm.vo.UploadFileResponseVo;
-import com.github.nezha.httpfetch.spring.HttpApiBean;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.net.URL;
@@ -15,7 +15,7 @@ import java.net.URL;
  */
 public class BookWormHttpApiTest extends BaseTest {
 
-    @HttpApiBean
+    @Autowired
     BookWormHttpApi bookWormHttpApi;
 
     @Test
@@ -23,6 +23,9 @@ public class BookWormHttpApiTest extends BaseTest {
         URL url = BookWormHttpApiTest.class.getClassLoader().getResource("httpapi.xml");
         File file = new File(url.toURI());
         UploadFileResponseVo responseVo = bookWormHttpApi.uploadFile(file, "name", "nValue");
+        System.out.println(JSON.toJSONString(responseVo));
+
+        responseVo = bookWormHttpApi.uploadFile(new URL("http://smart-images.kuaizitech.cn/10-13-185-165/smart/stable/c8/6c/41033_508401_500601,554701,1095401,1095101,630601,2894201,2894301.jpg"), "name", "nValue");
         System.out.println(JSON.toJSONString(responseVo));
     }
 

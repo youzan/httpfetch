@@ -45,6 +45,7 @@ public class UrlWrapperChain implements HttpApiChain {
         if(urlObj == null){
             String msg = String.format("url未找到! code [%s]", code);
             LOGGER.debug(msg);
+            return null;
         }
         return urlObj.toString();
     }

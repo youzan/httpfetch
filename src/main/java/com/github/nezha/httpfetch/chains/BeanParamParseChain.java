@@ -48,7 +48,12 @@ public class BeanParamParseChain implements HttpApiChain {
                 requestParameterIterator.remove();
 
                 //解析单个bean param标注对象
-                List<RequestParameter> single = parseSingleBeanParam(parameterWrapper, requestParameter.getParameter());
+                List<RequestParameter> single;
+                if(requestParameter.getParameter() instanceof Map){
+                    single = parseSingleMapParam(parameterWrapper, (Map)requestParameter.getParameter());
+                }else{
+                    single = parseSingleBeanParam(parameterWrapper, requestParameter.getParameter());
+                }
                 if(single != null){
                     hasParsedParamerers.addAll(single);
                 }
@@ -57,6 +62,29 @@ public class BeanParamParseChain implements HttpApiChain {
 
         //添加到 requestParameter中
         originParameters.addAll(hasParsedParamerers);
+    }
+
+    /**
+     * 分装单个bean param标注对象
+     * @param parameter
+     * @return
+     */
+    private List<RequestParameter> parseSingleMapParam(ParameterWrapper parameterWrapper, Map parameter){
+        Iterator<Map.Entry> entryIterator = parameter.entrySet().iterator();
+        List<RequestParameter> beanRequestParameters = new ArrayList<>();
+        while(entryIterator.hasNext()){
+            Map.Entry entry = entryIterator.next();
+            Object key = entry.getKey();
+            Object value = entry.getValue();
+            if(key instanceof String && value != null){
+                ParameterWrapper entryParameterWrapper = new ParameterWrapper(
+                        value.getClass(), key.toString(),
+                        value.getClass(), parameterWrapper.getParameterAnnotations());
+                RequestParameter requestParameter = new RequestParameter(entryParameterWrapper, value);
+                beanRequestParameters.add(requestParameter);
+            }
+        }
+        return beanRequestParameters;
     }
 
     /**

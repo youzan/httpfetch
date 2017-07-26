@@ -22,7 +22,7 @@
 		</property>
 		<property name="urlAlias">
 			<map>
-				<entry key="mbostockApi.getUsCongress" value="https://bl.ocks.org/mbostock/raw/4090846/us-congress-113.json" />
+				<entry key="mbostockApi.getUsCongress" value="${mock.host}/mbostock/raw/4090846/us-congress-113.json" />
 			</map>
 		</property>
 	</bean>
@@ -39,8 +39,9 @@
 		<constructor-arg index="0" ref="httpApiConfiguration" />
 	</bean>
 
-	<bean class="com.github.nezha.httpfetch.spring.HttpApiBeanPostProcessor">
+	<bean class="com.github.nezha.httpfetch.spring.HttpApiScannerConfigurer">
 		<property name="service" ref="httpApiService" />
+		<property name="basePackage" value="com.github.nezha.httpfetch.bookworm.api,com.github.nezha.httpfetch.mbostock.api" />
 	</bean>
 
 </beans>

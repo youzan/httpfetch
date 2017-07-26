@@ -9,6 +9,7 @@ import com.github.nezha.httpfetch.chains.BeanParam;
 import com.github.nezha.httpfetch.resolver.FormParam;
 
 import java.io.File;
+import java.net.URL;
 
 /**
  * Created by daiqiang on 17/6/14.
@@ -27,6 +28,21 @@ public interface BookWormHttpApi {
     @HttpApi(timeout = 2000, url = "http://bookworm365.com/uploadImage")
     @BookWormApi
     UploadFileResponseVo uploadFile(@QueryParam("file") @FormParam File file,
+                                    @QueryParam("name") String name,
+                                    @QueryParam("n_value") String nValue);
+
+    /**
+     *
+     * 新增一个 拦截的chain  用于增加特定请求的token
+     * @see[BookWormTokenChain]
+     * @param url
+     * @param name
+     * @param nValue
+     * @return
+     */
+    @HttpApi(timeout = 2000, url = "http://bookworm365.com/uploadImage")
+    @BookWormApi
+    UploadFileResponseVo uploadFile(@QueryParam("file") @FormParam URL url,
                                     @QueryParam("name") String name,
                                     @QueryParam("n_value") String nValue);
 

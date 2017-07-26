@@ -2,15 +2,14 @@ package com.github.nezha.httpfetch.convertor;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
 import com.github.nezha.httpfetch.HttpApiMethodWrapper;
 import com.github.nezha.httpfetch.HttpApiRequestParam;
+import com.github.nezha.httpfetch.ResponseTypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 
@@ -73,7 +72,7 @@ public class DefaultResponseGeneratorConvertor implements ResponseGeneratorConve
             }else if(Map.class.isAssignableFrom(returnType)){
                 return JSONObject.parseObject(value);
             }else{
-                return JSONObject.parseObject(value, new DspResponseTypeReference(method.getGenericReturnType()));
+                return JSONObject.parseObject(value, new ResponseTypeReference(method.getGenericReturnType()));
             }
         } catch (Exception e) {
             String msg = "读取请求结果时出错！";
@@ -87,15 +86,4 @@ public class DefaultResponseGeneratorConvertor implements ResponseGeneratorConve
         return true;
     }
 
-    public static class DspResponseTypeReference<T> extends TypeReference<T> {
-        private Type type;
-
-        public DspResponseTypeReference(Type type){
-            this.type = type;
-        }
-
-        public Type getType() {
-            return this.type;
-        }
-    }
 }

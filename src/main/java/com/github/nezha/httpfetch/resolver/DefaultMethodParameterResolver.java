@@ -3,6 +3,8 @@ package com.github.nezha.httpfetch.resolver;
 import com.alibaba.fastjson.JSONObject;
 import com.github.nezha.httpfetch.*;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 
 /**
@@ -24,6 +26,10 @@ public class DefaultMethodParameterResolver implements MethodParameterResolver {
 		}
 
 		if(arg instanceof File){
+			requestParameter.setParameter(arg);
+		}else if(arg instanceof java.net.URL){
+			requestParameter.setParameter(arg);
+		}else if(arg instanceof ImageParam){
 			requestParameter.setParameter(arg);
 		}else{
 			requestParameter.setParameter(parseParameter(arg));

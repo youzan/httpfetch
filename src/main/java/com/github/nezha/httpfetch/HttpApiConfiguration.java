@@ -67,6 +67,7 @@ public class HttpApiConfiguration {
         chains.add(new ExecuteRequestChain());
 
         //默认参数解析类
+        parameterResolvers.add(new UrlParameterResolver());
         parameterResolvers.add(new RequestBodyParameterResolver());
         parameterResolvers.add(new DefaultMethodParameterResolver());
 
