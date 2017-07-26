@@ -34,6 +34,7 @@ public class HttpApiService {
 
     public void init(){
         //创建调用链
+        configuration.init();
         List<HttpApiChain> chains = configuration.getChains();
 
         //排序

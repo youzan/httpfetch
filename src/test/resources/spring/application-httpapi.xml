@@ -40,7 +40,6 @@
 	</bean>
 
 	<bean class="com.github.nezha.httpfetch.spring.HttpApiScannerConfigurer">
-		<property name="service" ref="httpApiService" />
 		<property name="basePackage" value="com.github.nezha.httpfetch.bookworm.api,com.github.nezha.httpfetch.mbostock.api" />
 	</bean>
 

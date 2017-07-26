@@ -1,7 +1,10 @@
 package com.github.nezha.httpfetch.spring;
 
 import com.github.nezha.httpfetch.HttpApiService;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -10,9 +13,9 @@ import java.lang.reflect.Proxy;
 /**
  * Created by daiqiang on 17/7/26.
  */
-public class HttpApiFactoryBean implements FactoryBean {
+public class HttpApiFactoryBean implements FactoryBean, ApplicationContextAware {
 
-    private HttpApiService service;
+    private ApplicationContext applicationContext;
 
     private Class<?> targetClass;
 
@@ -20,10 +23,23 @@ public class HttpApiFactoryBean implements FactoryBean {
     public Object getObject() throws Exception {
         return Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class<?>[]{targetClass}, new InvocationHandler(){
 
+            private HttpApiService service;
+
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                Object api = service.getOrCreateService(targetClass);
-                return method.invoke(api, args);
+                Object api = getService().getOrCreateService(targetClass);
+                return method.invoke(api);
+            }
+
+            public HttpApiService getService(){
+                if(service == null){
+                    synchronized (this){
+                        if(service == null){
+                            service = applicationContext.getBean(HttpApiService.class);
+                        }
+                    }
+                }
+                return service;
             }
 
         });
@@ -39,19 +55,16 @@ public class HttpApiFactoryBean implements FactoryBean {
         return true;
     }
 
-    public HttpApiService getService() {
-        return service;
-    }
-
-    public void setService(HttpApiService service) {
-        this.service = service;
-    }
-
     public Class<?> getTargetClass() {
         return targetClass;
     }
 
     public void setTargetClass(Class<?> targetClass) {
         this.targetClass = targetClass;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }

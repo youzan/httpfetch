@@ -14,27 +14,17 @@ import org.springframework.util.StringUtils;
  */
 public class HttpApiScannerConfigurer implements BeanDefinitionRegistryPostProcessor {
 
-    private HttpApiService service;
-
     private String basePackage;
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        HttpApiClassPathBeanDefinitionScanner scanner = new HttpApiClassPathBeanDefinitionScanner(registry, service);
+        HttpApiClassPathBeanDefinitionScanner scanner = new HttpApiClassPathBeanDefinitionScanner(registry);
         scanner.register();
         scanner.doScan(StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
     }
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-    }
-
-    public HttpApiService getService() {
-        return service;
-    }
-
-    public void setService(HttpApiService service) {
-        this.service = service;
     }
 
     public String getBasePackage() {

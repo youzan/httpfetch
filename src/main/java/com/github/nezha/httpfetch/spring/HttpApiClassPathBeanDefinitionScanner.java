@@ -22,11 +22,8 @@ public class HttpApiClassPathBeanDefinitionScanner extends ClassPathBeanDefiniti
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpApiClassPathBeanDefinitionScanner.class);
 
-    private HttpApiService service;
-
-    public HttpApiClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry, HttpApiService service) {
+    public HttpApiClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry) {
         super(registry);
-        this.service = service;
     }
 
     public void register(){
@@ -48,7 +45,6 @@ public class HttpApiClassPathBeanDefinitionScanner extends ClassPathBeanDefiniti
                 Class<?> clazz = Class.forName(definition.getBeanClassName());
                 definition.getPropertyValues().add("targetClass", clazz);
                 definition.setBeanClass(HttpApiFactoryBean.class);
-                definition.getPropertyValues().add("service", service);
             } catch (ClassNotFoundException e) {
                 LOGGER.error("class not found! className [{}]", definition.getBeanClassName(), e);
                 throw new RuntimeException("class not found!");
