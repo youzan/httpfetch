@@ -1,48 +1,22 @@
 package com.github.nezha.httpfetch.spring;
 
 import com.github.nezha.httpfetch.HttpApiService;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Created by daiqiang on 17/7/26.
  */
-public class HttpApiFactoryBean implements FactoryBean, ApplicationContextAware {
+public class HttpApiFactoryBean implements FactoryBean {
 
-    private ApplicationContext applicationContext;
+    @Autowired
+    private HttpApiService httpApiService;
 
     private Class<?> targetClass;
 
     @Override
     public Object getObject() throws Exception {
-        return Proxy.newProxyInstance(this.getClass().getClassLoader(), new Class<?>[]{targetClass}, new InvocationHandler(){
-
-            private HttpApiService service;
-
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                Object api = getService().getOrCreateService(targetClass);
-                return method.invoke(api);
-            }
-
-            public HttpApiService getService(){
-                if(service == null){
-                    synchronized (this){
-                        if(service == null){
-                            service = applicationContext.getBean(HttpApiService.class);
-                        }
-                    }
-                }
-                return service;
-            }
-
-        });
+        return httpApiService.getOrCreateService(targetClass);
     }
 
     @Override
@@ -63,8 +37,4 @@ public class HttpApiFactoryBean implements FactoryBean, ApplicationContextAware 
         this.targetClass = targetClass;
     }
 
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-    }
 }
