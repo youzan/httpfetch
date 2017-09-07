@@ -18,11 +18,11 @@ public class DefaultMethodParameterResolver implements MethodParameterResolver {
 	}
 
 	@Override
-	public void resolveArgument(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
+	public boolean resolveArgument(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
 		ParameterWrapper parameterWrapper = requestParameter.getParameterWrapper();
 		Object arg = requestParameter.getParameter();
 		if(parameterWrapper.getParameterType() == null || arg == null){
-			return;
+			return false;
 		}
 
 		if(arg instanceof File){
@@ -32,21 +32,9 @@ public class DefaultMethodParameterResolver implements MethodParameterResolver {
 		}else if(arg instanceof ImageParam){
 			requestParameter.setParameter(arg);
 		}else{
-			requestParameter.setParameter(parseParameter(arg));
+			requestParameter.setParameter(ParameterUtils.parseParameter(arg));
 		}
-	}
-
-	private String parseParameter(Object value){
-		Class parameterCls = value.getClass();
-		if(String.class.isAssignableFrom(parameterCls)){
-			return value.toString();
-		}else if(CommonUtils.isPrimitive(parameterCls)){
-			return String.valueOf(value);
-		}else if(parameterCls.isEnum()){
-			return value.toString();
-		}else {
-			return JSONObject.toJSONString(value);
-		}
+		return true;
 	}
 
 }

@@ -15,8 +15,9 @@ public class UrlParameterResolver implements MethodParameterResolver {
     }
 
     @Override
-    public void resolveArgument(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
+    public boolean resolveArgument(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
         param.setUrl(requestParameter.getParameter().toString());
+        return false;
     }
 
 }

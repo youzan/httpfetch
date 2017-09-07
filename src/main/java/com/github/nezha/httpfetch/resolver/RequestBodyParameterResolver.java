@@ -27,11 +27,11 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
     }
 
     @Override
-    public void resolveArgument(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
+    public boolean resolveArgument(HttpApiRequestParam param, HttpApiMethodWrapper wrapper, RequestParameter requestParameter) {
         //从param中取参数值
         Class<?> parameterCls = requestParameter.getParameterWrapper().getParameterType();
         if(parameterCls == null){
-            return;
+            return false;
         }
         Object arg = requestParameter.getParameter();
         String value;
@@ -56,5 +56,6 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
             }
             requestParameter.setParameter(body);
         }
+        return true;
     }
 }

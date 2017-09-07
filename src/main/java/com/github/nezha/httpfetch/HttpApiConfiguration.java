@@ -68,6 +68,7 @@ public class HttpApiConfiguration {
 
         //默认参数解析类
         parameterResolvers.add(new UrlParameterResolver());
+        parameterResolvers.add(new ArrayParameterResolver());
         parameterResolvers.add(new RequestBodyParameterResolver());
         parameterResolvers.add(new DefaultMethodParameterResolver());
 

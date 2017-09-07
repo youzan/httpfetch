@@ -12,7 +12,7 @@
     </appender>
 
     <logger name="com.github.nezha.httpfetch" additivity="false">
-        <level value="DEBUG"/>
+        <level value="ERROR"/>
         <appender-ref ref="STDOUT" />
     </logger>
 

@@ -24,9 +24,9 @@ public interface MethodParameterResolver {
 	 * @param param 上一层处理后的请求参数
 	 * @param wrapper api封装后的bean，包括url、参数名称、响应类
 	 * @param requestParameter 单个参数
-	 * @return
+	 * @return 是否添加到请求参数中 true 添加到http param  false 不添加到http param
 	 */
-	void resolveArgument(HttpApiRequestParam param,
+	boolean resolveArgument(HttpApiRequestParam param,
 						 HttpApiMethodWrapper wrapper,
 						 RequestParameter requestParameter);
 	

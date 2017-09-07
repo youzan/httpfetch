@@ -29,7 +29,11 @@ public class ParameterResolverChain implements HttpApiChain {
             for(RequestParameter requestParameter : requestParameters){
                 MethodParameterResolver resolver = choiseResolver(wrapper, requestParameter);
                 if(resolver != null){
-                    resolver.resolveArgument(requestParam, wrapper, requestParameter);
+                    boolean ifSetParam = resolver.resolveArgument(requestParam, wrapper, requestParameter);
+                    if(!ifSetParam){
+                        //不写道param
+                        continue;
+                    }
                 }
 
                 this.wrapRequestParam(requestParameter, requestParam);
