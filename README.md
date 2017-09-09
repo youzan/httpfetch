@@ -52,7 +52,7 @@ git clone https://github.com/youzan/zanui-weapp.git
 
 * 请求处理流程
    请求者发起请求时，会通过配置的各个Chain单元，一步一步的处理和封装参数并发送最终的Http请求，最后将返回的值进行封装。
-![请求处理流程](http://onlz2qizd.bkt.clouddn.com/http-fetch.jpeg?a=3#1)
+![请求处理流程](http://onlz2qizd.bkt.clouddn.com/http-fetch.jpeg?a=4#1)
 
 ## 使用
 
