@@ -27,7 +27,7 @@ public interface BookWormHttpApi {
      */
     @HttpApi(timeout = 2000, url = "http://bookworm365.com/uploadImage")
     @BookWormApi
-    UploadFileResponseVo uploadFile(@QueryParam("file") @FormParam File file,
+    UploadFileResponseVo uploadFile(@FormParam("file") File file,
                                     @QueryParam("name") String name,
                                     @QueryParam("n_value") String nValue);
 
@@ -42,7 +42,7 @@ public interface BookWormHttpApi {
      */
     @HttpApi(timeout = 2000, url = "http://bookworm365.com/uploadImage")
     @BookWormApi
-    UploadFileResponseVo uploadFile(@QueryParam("file") @FormParam URL url,
+    UploadFileResponseVo uploadFile(@FormParam("file") URL url,
                                     @QueryParam("name") String name,
                                     @QueryParam("n_value") String nValue);
 

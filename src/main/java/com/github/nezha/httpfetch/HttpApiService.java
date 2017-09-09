@@ -2,6 +2,8 @@ package com.github.nezha.httpfetch;
 
 import com.github.nezha.httpfetch.chains.HttpApiChain;
 import com.github.nezha.httpfetch.convertor.ResponseGeneratorConvertor;
+import com.github.nezha.httpfetch.resolver.FormParam;
+import com.github.nezha.httpfetch.resolver.PostParam;
 import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import org.slf4j.Logger;
@@ -206,17 +208,21 @@ public class HttpApiService {
             for(int i=0;i<annotationArray.length;i++){
                 //校验里面是否有param注解
                 Annotation[] annotations = annotationArray[i];
-                QueryParam param = null;
+                paramNames[i] = null;
                 for(Annotation annotation : annotations){
                     if(QueryParam.class.isAssignableFrom(annotation.annotationType())){
-                        param = (QueryParam) annotation;
+                        paramNames[i] = ((QueryParam) annotation).value();
+                        break;
+                    }else if(FormParam.class.isAssignableFrom(annotation.annotationType())){
+                        paramNames[i] = ((FormParam) annotation).value();
+                        break;
+                    }else if(PostParam.class.isAssignableFrom(annotation.annotationType())){
+                        paramNames[i] = ((PostParam) annotation).value();
                         break;
                     }
                 }
-                if(param == null){
+                if(paramNames[i] == null){
                     paramNames[i] = "";
-                }else{
-                    paramNames[i] = param.value();
                 }
             }
 

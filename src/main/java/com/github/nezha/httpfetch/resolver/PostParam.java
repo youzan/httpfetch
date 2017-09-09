@@ -9,4 +9,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface PostParam {
+
+    String value() default "";
+
 }

@@ -12,11 +12,11 @@
     </appender>
 
     <logger name="com.github.nezha.httpfetch" additivity="false">
-        <level value="ERROR"/>
+        <level value="DEBUG"/>
         <appender-ref ref="STDOUT" />
     </logger>
 
-    <root level="ERROR">
+    <root level="DEBUG">
         <appender-ref ref="ROOT"/>
         <appender-ref ref="STDOUT" />
     </root>

@@ -25,7 +25,7 @@ public class BookWormHttpApiTest extends BaseTest {
         UploadFileResponseVo responseVo = bookWormHttpApi.uploadFile(file, "name", "nValue");
         System.out.println(JSON.toJSONString(responseVo));
 
-        responseVo = bookWormHttpApi.uploadFile(new URL("http://smart-images.kuaizitech.cn/10-13-185-165/smart/stable/c8/6c/41033_508401_500601,554701,1095401,1095101,630601,2894201,2894301.jpg"), "name", "nValue");
+        responseVo = bookWormHttpApi.uploadFile(new URL("http://onlz2qizd.bkt.clouddn.com/800_800.png"), "name", "nValue");
         System.out.println(JSON.toJSONString(responseVo));
     }
 

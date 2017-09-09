@@ -12,7 +12,7 @@ import java.util.Arrays;
 /**
  * Created by daiqiang on 17/6/13.
  */
-public class MbostockApiTest2 {
+public class MbostockApiUseXmlTest {
 
     @Test
     public void test() {
