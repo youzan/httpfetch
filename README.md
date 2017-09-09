@@ -33,7 +33,7 @@
 
 ## 下载
 ``` bash
-git clone https://github.com/youzan/zanui-weapp.git
+git clone https://github.com/wumoyu850921/httpfetch.git
 ```
 
 ## 对象
