@@ -65,4 +65,4 @@ git clone https://github.com/youzan/zanui-weapp.git
 
 ## 贡献
 
-如果你有好的意见或建议，欢迎给我们提 [issue] 或 [PR]，为优化 [ZanUI-Weapp] 贡献力量
+如果你有好的意见或建议，欢迎给我们提 [issue] 或 [PR]，为优化 [http-fetch] 贡献力量
