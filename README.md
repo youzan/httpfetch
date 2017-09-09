@@ -231,6 +231,7 @@ public class MbostockApiTest extends BaseTest {
 
 ### URL映射
 url的映射使用了三种方式：
+
 1.使用xml进行配置：
 ``` xml
     <aliases>
