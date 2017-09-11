@@ -1,5 +1,5 @@
 <p align="center">
-    <image src="http://onlz2qizd.bkt.clouddn.com/logo.jpeg" width="115" height="100"></image>
+    <img src="./logo.jpeg" width="115" height="100"></img>
 </p>
 <p align="center">让http请求的调用更优雅</p>
 
@@ -23,13 +23,13 @@
             System.out.println(response);
         }
         getMethod.releaseConnection();
- 
+
 ```
- 
+
  可是我们是不是有一种更优雅的方式呢？类似于MyBatis，通过一定的配置，然后在需要请求http接口的时候只需要调用一个接口函数便可以完成上述代码的工作。
- 
+
  这就是HttpFetch的初衷，让http请求的调用更优雅。
- 
+
 
 ## 下载
 ``` bash
@@ -46,7 +46,7 @@ git clone https://github.com/wumoyu850921/httpfetch.git
 
 ## 框架
 * 初始化过程
-   
+
    初始化过程可以选择spring和xml两种。spring的方式直接将生成的代理类注册到BeanDefinitionRegistry（可见HttpApiClassPathBeanDefinitionScanner源码），xml方式可以在没有spring组件的情况下独立运行（见单测MbostockApiUseXmlTest）。两种方式都可以完成Chain、ParamterResolver和Convertor注册。
 ![初始化过程](http://onlz2qizd.bkt.clouddn.com/http-fetch2.jpeg)
 
@@ -89,7 +89,7 @@ git clone https://github.com/wumoyu850921/httpfetch.git
     </aliases>
 
 </setting>
-``` 
+```
 2.编写MbostockApi接口类：
 ``` java
 package com.github.nezha.httpfetch.mbostock.api;
@@ -107,7 +107,7 @@ public interface MbostockApi {
     UsCongressResponseVo getUsCongress();
 
 }
-``` 
+```
 
 3.编写测试类：
 ``` java
@@ -181,7 +181,7 @@ public interface MbostockApi {
 	<bean id="httpApiService" class="com.github.nezha.httpfetch.HttpApiService" init-method="init">
 		<constructor-arg index="0" ref="httpApiConfiguration" />
 	</bean>
-    
+
     <!-- http api代理注册 -->
 	<bean class="com.github.nezha.httpfetch.spring.HttpApiScannerConfigurer">
 		<property name="basePackage" value="com.github.nezha.httpfetch.bookworm.api,com.github.nezha.httpfetch.mbostock.api,com.github.nezha.httpfetch.youzan.api" />
@@ -206,7 +206,7 @@ public interface MbostockApi {
     UsCongressResponseVo getUsCongress();
 
 }
-``` 
+```
 3.编写测试类：
 ``` java
 public class MbostockApiTest extends BaseTest {
@@ -227,7 +227,7 @@ public class MbostockApiTest extends BaseTest {
     }
 
 }
-``` 
+```
 
 ### URL映射
 url的映射使用了三种方式：
@@ -302,7 +302,7 @@ Map audit(@PostParam("advertisementId") Integer advertisementId);
     UploadFileResponseVo uploadFile(@FormParam("file") File file,
                                     @QueryParam("name") String name,
                                     @QueryParam("n_value") String nValue);
-``` 
+```
 
 4.BeanParam注解使用：
 当我们传递一个bean做为参数，但是希望对这个bean进行解析然后作为http请求参数时，我们可以使用BeanParam注解。
@@ -310,7 +310,7 @@ Map audit(@PostParam("advertisementId") Integer advertisementId);
     @HttpApi(timeout = 2000, url = "http://bookworm365.com/uploadImage")
     @BookWormApi
     UploadFileResponseVo uploadFile(@BeanParam @QueryParam UploadFileRequestVo requestVo);
-``` 
+```
 ``` java
 package com.github.nezha.httpfetch.bookworm.vo;
 
