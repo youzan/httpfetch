@@ -1,5 +1,5 @@
 <p align="center">
-    <image src="http://onlz2qizd.bkt.clouddn.com/logo" width="115" height="100"></image>
+    <image src="http://onlz2qizd.bkt.clouddn.com/logo.jpeg" width="115" height="100"></image>
 </p>
 <p align="center">让http请求的调用更优雅</p>
 
