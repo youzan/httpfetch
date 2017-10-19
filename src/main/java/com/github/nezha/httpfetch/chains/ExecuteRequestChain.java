@@ -29,7 +29,7 @@ public class ExecuteRequestChain implements HttpApiChain {
     public HttpResult doChain(HttpApiInvoker invoker, Invocation invocation) {
         HttpApiMethodWrapper wrapper = invocation.getWrapper();
         HttpApiRequestParam requestParam = invocation.getRequestParam();
-        LOGGER.info("requestParam:"+ JSON.toJSONString(requestParam));
+        LOGGER.info("调用请求参数:"+ JSON.toJSONString(requestParam));
         try{
             HttpResult httpResult = this.request(requestParam, wrapper);
             return httpResult;
