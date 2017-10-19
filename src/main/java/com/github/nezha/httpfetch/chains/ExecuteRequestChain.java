@@ -29,11 +29,10 @@ public class ExecuteRequestChain implements HttpApiChain {
     public HttpResult doChain(HttpApiInvoker invoker, Invocation invocation) {
         HttpApiMethodWrapper wrapper = invocation.getWrapper();
         HttpApiRequestParam requestParam = invocation.getRequestParam();
-        if(LOGGER.isInfoEnabled()){
-            LOGGER.info("requestParam:"+ JSON.toJSONString(requestParam));
-        }
+        LOGGER.info("requestParam:"+ JSON.toJSONString(requestParam));
         try{
-            return this.request(requestParam, wrapper);
+            HttpResult httpResult = this.request(requestParam, wrapper);
+            return httpResult;
         }catch (Exception e){
             LOGGER.error("请求调用时发生异常! method [{}] requestParam [{}]", invocation.getMethod(), JSON.toJSONString(requestParam), e);
             HttpResult httpResult = new HttpResult();
@@ -90,7 +89,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                 body = baos.toByteArray();
             }
         }catch (Exception e){
-            LOGGER.error("发起POST请求时出错!", "url", url);
+            LOGGER.error("发起POST请求时出错! url [{}]", url, e);
             throw new RuntimeException("发起请求时出错!", e);
         }
 
@@ -179,7 +178,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                 is = conn.getErrorStream();
             }
             if(LOGGER.isInfoEnabled()){
-                LOGGER.info("调用结束!", "url", url, "rt", System.currentTimeMillis()-time);
+                LOGGER.info("调用结束!,url [{}] rt[{}]", url, System.currentTimeMillis()-time);
             }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -192,9 +191,10 @@ public class ExecuteRequestChain implements HttpApiChain {
             HttpResult result = new HttpResult();
             result.setStatusCode(conn.getResponseCode());
             result.setData(baos.toByteArray());
+            LOGGER.info("调用结果!,result [{}]", baos.toString());
             return result;
         } catch (Exception e) {
-            LOGGER.error("发起请求时出错!", "url", url);
+            LOGGER.error("发起请求时出错! url [{}]", url, e);
             throw new RuntimeException("发起请求时出错!", e);
         } finally {
             if (is != null) {
