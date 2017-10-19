@@ -29,9 +29,6 @@ public class DefaultResponseGeneratorConvertor implements ResponseGeneratorConve
         String value = null;
         try {
             value = new String(response, "UTF-8");
-            if(LOGGER.isInfoEnabled()){
-                LOGGER.info("请求结果! value [{}]", value);
-            }
             if(returnType.isPrimitive()){
                 //简单类型转换
                 if(Boolean.class.isAssignableFrom(returnType)){
