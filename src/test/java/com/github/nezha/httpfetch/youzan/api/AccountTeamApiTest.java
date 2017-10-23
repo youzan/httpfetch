@@ -31,14 +31,6 @@ public class AccountTeamApiTest extends BaseTest {
         requestVo.setKdtIds(Arrays.asList(1L));
         Map map = accountTeamApi.getTeamByIds(requestVo);
         System.out.println(JSON.toJSONString(map));
-        try{
-            int a = 1/0;
-            int b =1;
-            int c =3;
-        }catch (Exception e){
-            LOGGER.error("请求调用时发生异常! method [{}] requestParam [{}]", 22, e);
-
-        }
     }
 
 }

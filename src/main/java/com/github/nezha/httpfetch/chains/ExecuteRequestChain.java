@@ -29,10 +29,11 @@ public class ExecuteRequestChain implements HttpApiChain {
     public HttpResult doChain(HttpApiInvoker invoker, Invocation invocation) {
         HttpApiMethodWrapper wrapper = invocation.getWrapper();
         HttpApiRequestParam requestParam = invocation.getRequestParam();
-        LOGGER.info("调用开始,请求参数:"+ JSON.toJSONString(requestParam));
+        if(LOGGER.isInfoEnabled()){
+            LOGGER.info("调用开始,请求参数:"+ JSON.toJSONString(requestParam));
+        }
         try{
-            HttpResult httpResult = this.request(requestParam, wrapper);
-            return httpResult;
+            return this.request(requestParam, wrapper);
         }catch (Exception e){
             LOGGER.error("请求调用时发生异常! method [{}] requestParam [{}]", invocation.getMethod(), JSON.toJSONString(requestParam), e);
             HttpResult httpResult = new HttpResult();
