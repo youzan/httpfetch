@@ -59,9 +59,9 @@ git clone https://github.com/wumoyu850921/httpfetch.git
 ### Maven
 ``` xml
 <dependency>
-    <groupId>com.alibaba</groupId>
-    <artifactId>fastjson</artifactId>
-    <version>VERSION_CODE</version>
+    <groupId>com.github.youzan</groupId>
+    <artifactId>http-fetch</artifactId>
+    <version>xxx 暂未上传</version>
 </dependency>
 ```
 
