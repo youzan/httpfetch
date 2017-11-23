@@ -11,7 +11,7 @@
         </encoder>
     </appender>
 
-    <logger name="com.github.nezha.httpfetch" additivity="false">
+    <logger name="com.github.youzan.httpfetch" additivity="false">
         <level value="DEBUG"/>
         <appender-ref ref="STDOUT" />
     </logger>

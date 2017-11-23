@@ -6,10 +6,10 @@
 		    http://www.springframework.org/schema/beans/spring-beans.xsd
 	    ">
 
-	<bean id="springReader" class="com.github.nezha.httpfetch.spring.SpringReader" >
+	<bean id="springReader" class="com.github.youzan.httpfetch.spring.SpringReader" >
 		<property name="chains" >
 			<list>
-				<bean class="com.github.nezha.httpfetch.bookworm.chains.BookWormTokenChain" />
+				<bean class="com.github.youzan.httpfetch.bookworm.chains.BookWormTokenChain" />
 			</list>
 		</property>
 		<property name="convertors">
@@ -27,7 +27,7 @@
 		</property>
 	</bean>
 
-	<bean id="httpApiConfiguration" class="com.github.nezha.httpfetch.HttpApiConfiguration" init-method="init">
+	<bean id="httpApiConfiguration" class="com.github.youzan.httpfetch.HttpApiConfiguration" init-method="init">
 		<property name="sourceReaders">
 			<list>
 				<ref bean="springReader" />
@@ -35,12 +35,12 @@
 		</property>
 	</bean>
 
-	<bean id="httpApiService" class="com.github.nezha.httpfetch.HttpApiService" init-method="init">
+	<bean id="httpApiService" class="com.github.youzan.httpfetch.HttpApiService" init-method="init">
 		<constructor-arg index="0" ref="httpApiConfiguration" />
 	</bean>
 
-	<bean class="com.github.nezha.httpfetch.spring.HttpApiScannerConfigurer">
-		<property name="basePackage" value="com.github.nezha.httpfetch.bookworm.api,com.github.nezha.httpfetch.mbostock.api,com.github.nezha.httpfetch.youzan.api" />
+	<bean class="com.github.youzan.httpfetch.spring.HttpApiScannerConfigurer">
+		<property name="basePackage" value="com.github.youzan.httpfetch.bookworm.api,com.github.youzan.httpfetch.mbostock.api,com.github.youzan.httpfetch.youzan.api" />
 	</bean>
 
 </beans>
