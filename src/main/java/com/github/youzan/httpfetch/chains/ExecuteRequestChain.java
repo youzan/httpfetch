@@ -27,7 +27,7 @@ public class ExecuteRequestChain implements HttpApiChain {
         HttpApiMethodWrapper wrapper = invocation.getWrapper();
         HttpApiRequestParam requestParam = invocation.getRequestParam();
         if(LOGGER.isInfoEnabled()){
-            LOGGER.info("requestParam:"+ JSON.toJSONString(requestParam));
+            LOGGER.info("调用开始,请求参数:"+ JSON.toJSONString(requestParam));
         }
         try{
             return this.request(requestParam, wrapper);
@@ -87,7 +87,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                 body = baos.toByteArray();
             }
         }catch (Exception e){
-            LOGGER.error("发起POST请求时出错!", "url", url);
+            LOGGER.error("发起POST请求时出错! url [{}]", url, e);
             throw new RuntimeException("发起请求时出错!", e);
         }
 
@@ -175,9 +175,6 @@ public class ExecuteRequestChain implements HttpApiChain {
             } else {
                 is = conn.getErrorStream();
             }
-            if(LOGGER.isInfoEnabled()){
-                LOGGER.info("调用结束!", "url", url, "rt", System.currentTimeMillis()-time);
-            }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             byte[] b = new byte[1024];
@@ -189,9 +186,12 @@ public class ExecuteRequestChain implements HttpApiChain {
             HttpResult result = new HttpResult();
             result.setStatusCode(conn.getResponseCode());
             result.setData(baos.toByteArray());
+            LOGGER.info("调用结果!,url [{}] rt[{}] result [{}]",
+                    url, System.currentTimeMillis()-time, baos.toString());
+
             return result;
         } catch (Exception e) {
-            LOGGER.error("发起请求时出错!", "url", url);
+            LOGGER.error("发起请求时出错! url [{}]", url, e);
             throw new RuntimeException("发起请求时出错!", e);
         } finally {
             if (is != null) {

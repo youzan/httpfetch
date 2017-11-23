@@ -11,12 +11,12 @@
         </encoder>
     </appender>
 
-    <logger name="com.github.youzan.httpfetch" additivity="false">
-        <level value="DEBUG"/>
+    <logger name="com.github.nezha.httpfetch" additivity="false">
+        <level value="INFO"/>
         <appender-ref ref="STDOUT" />
     </logger>
 
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="ROOT"/>
         <appender-ref ref="STDOUT" />
     </root>
