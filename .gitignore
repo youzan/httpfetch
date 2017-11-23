@@ -1,4 +1,6 @@
 .idea/
+target/
+http-fetch.iml
 *.iml
 target/
 logger*/
