@@ -61,7 +61,7 @@ git clone https://github.com/wumoyu850921/httpfetch.git
 <dependency>
     <groupId>com.github.youzan</groupId>
     <artifactId>http-fetch</artifactId>
-    <version>1.1.5</version>
+    <version>1.1.6</version>
 </dependency>
 ```
 
