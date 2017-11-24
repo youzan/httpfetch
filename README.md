@@ -253,7 +253,7 @@ import java.util.Map;
  */
 public interface AlarmJobApi {
 
-    @HttpApi(method = "POST", headers = @Header(key = "Content-type", value = "application/json"), timeout = 2000, url = "http://alert.s.qima-inc.com/api/v1/alert")
+    @HttpApi(method = "POST", headers = @Header(url = "http://alert.s.qima-inc.com/api/v1/alert", key = "Content-type", value = "application/json"), timeout = 2000)
     String alert(@RequestBody Map<String, Object> param);
 
 }
