@@ -13,7 +13,7 @@ public @interface HttpApi {
 	 * operateCode的使用 主要是因为有一些url的host在不同的环境又不一样的配置
 	 * 举例interface+method:BaidiApi.search(String) alia为baiduApi.search
 	 * @return
-     */
+	 */
 	String url() default "";
 
 	String operateCode() default "";
@@ -21,31 +21,31 @@ public @interface HttpApi {
 	/**
 	 * 请求的METHOD
 	 * @return
-     */
+	 */
 	String method() default "GET";
 
 	/**
 	 * http head
 	 * @return
-     */
+	 */
 	Header[] headers() default {};
 
 	/**
 	 * 结果生产类,使用类的simpleName就行
 	 * @return
-     */
+	 */
 	String generator() default "";
 
 	/**
 	 * 超时时间
 	 * @return
-     */
+	 */
 	int timeout();
 
 	/**
 	 * 超时时间
 	 * @return
-     */
+	 */
 	int readTimeout() default  0;
 
 	/**
@@ -53,5 +53,11 @@ public @interface HttpApi {
 	 * @return
 	 */
 	String encoding() default  "UTF-8";
+
+	/**
+	 * 重试次数
+	 * @return
+	 */
+	int retry() default 0;
 
 }

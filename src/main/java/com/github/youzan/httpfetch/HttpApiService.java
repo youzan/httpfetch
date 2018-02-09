@@ -30,11 +30,11 @@ public class HttpApiService {
 
     private Map<Method, HttpApiMethodWrapper> methodsCache = new HashMap<>();
 
-    public HttpApiService(HttpApiConfiguration configuration){
+    public HttpApiService(HttpApiConfiguration configuration) {
         this.configuration = configuration;
     }
 
-    public void init(){
+    public void init() {
         //创建调用链
         configuration.init();
         List<HttpApiChain> chains = configuration.getChains();
@@ -50,10 +50,10 @@ public class HttpApiService {
         });
 
         HttpApiInvoker last = null;
-        for(int i= chains.size()-1;i>=0;i--){
+        for (int i = chains.size() - 1; i >= 0; i--) {
             final HttpApiChain chain = chains.get(i);
             final HttpApiInvoker next = last;
-            last = new HttpApiInvoker(){
+            last = new HttpApiInvoker() {
                 @Override
                 public HttpResult invoke(Invocation invocation) {
                     return chain.doChain(next, invocation);
@@ -63,18 +63,18 @@ public class HttpApiService {
         startInvoker = last;
     }
 
-    public <T> T getOrCreateService(Class<T> serviceCls){
+    public <T> T getOrCreateService(Class<T> serviceCls) {
         Object service;
-        if(!serviceCache.containsKey(serviceCls)){
+        if (!serviceCache.containsKey(serviceCls)) {
             try {
                 service = createService(serviceCls);
             } catch (Exception e) {
-                String msg = String.format("服务创建失败! serviceCls ["+serviceCls+"]");
+                String msg = String.format("服务创建失败! serviceCls [" + serviceCls + "]");
                 LOGGER.error(msg, e);
                 throw new RuntimeException(msg);
             }
             serviceCache.put(serviceCls, service);
-        }else{
+        } else {
             service = serviceCache.get(serviceCls);
         }
         return (T) service;
@@ -82,6 +82,7 @@ public class HttpApiService {
 
     /**
      * 创建代理服务,对代理类和头参数等进行封装
+     *
      * @param serviceCls 服务接口类
      * @return
      * @throws InvocationTargetException
@@ -91,9 +92,9 @@ public class HttpApiService {
      */
     private Object createService(final Class<?> serviceCls) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         ProxyFactory factory = new ProxyFactory();
-        if(serviceCls.isInterface()){
-            factory.setInterfaces(new Class[] {serviceCls});
-        }else{
+        if (serviceCls.isInterface()) {
+            factory.setInterfaces(new Class[]{serviceCls});
+        } else {
             String msg = String.format("类[%s]不是接口!", serviceCls);
             LOGGER.error(msg);
             throw new IllegalArgumentException(msg);
@@ -133,20 +134,23 @@ public class HttpApiService {
             invocation.setServiceCls(serviceCls);
 
             HttpResult httpResult = startInvoker.invoke(invocation);
+
             return httpResult.getData();
+
+
         }
 
-        private void wrapRequestParameter(Invocation invocation, HttpApiMethodWrapper wrapper, Object[] args){
+        private void wrapRequestParameter(Invocation invocation, HttpApiMethodWrapper wrapper, Object[] args) {
             //封装参数
-            if(!CommonUtils.isArrayEmpty(wrapper.getParameters())){
-                for(int i=0;i<wrapper.getParameters().length;i++){
+            if (!CommonUtils.isArrayEmpty(wrapper.getParameters())) {
+                for (int i = 0; i < wrapper.getParameters().length; i++) {
                     ParameterWrapper parameterWrapper = wrapper.getParameters()[i];
                     invocation.addParameters(new RequestParameter(parameterWrapper, args[i]));
                 }
             }
         }
 
-        public HttpApiMethodWrapper getOrNewWrapper(Method method, HttpApi httpApiAnno){
+        public HttpApiMethodWrapper getOrNewWrapper(Method method, HttpApi httpApiAnno) {
             HttpApiMethodWrapper wrapper;
             if (methodsCache.containsKey(method)) {
                 wrapper = methodsCache.get(method);
@@ -169,7 +173,7 @@ public class HttpApiService {
                 ResponseGeneratorConvertor generatorService = null;
                 if (!CommonUtils.isStringEmpty(httpApiAnno.generator())) {
                     for (ResponseGeneratorConvertor handler : configuration.getConvertors()) {
-                        if (httpApiAnno instanceof ResponseGeneratorConvertor){
+                        if (httpApiAnno instanceof ResponseGeneratorConvertor) {
                             generatorService = handler;
                             break;
                         }
@@ -187,7 +191,9 @@ public class HttpApiService {
                 if (httpApiAnno.readTimeout() > 0) {
                     wrapper.setReadTimeout(httpApiAnno.readTimeout());
                 }
-
+                if (httpApiAnno.retry() > 0) {
+                    wrapper.setRetry(httpApiAnno.retry());
+                }
                 methodsCache.put(method, wrapper);
             }
             return wrapper;
@@ -195,39 +201,40 @@ public class HttpApiService {
 
         /**
          * 从methods中读取
+         *
          * @param method
          * @return
          */
-        private ParameterWrapper[] wrapperPameters(Method method){
+        private ParameterWrapper[] wrapperPameters(Method method) {
             Annotation[][] annotationArray = method.getParameterAnnotations();
-            if(annotationArray == null || annotationArray.length == 0){
+            if (annotationArray == null || annotationArray.length == 0) {
                 LOGGER.info("该函数没有参数！method [{}]", method.getName());
                 return new ParameterWrapper[]{};
             }
             String[] paramNames = new String[annotationArray.length];
-            for(int i=0;i<annotationArray.length;i++){
+            for (int i = 0; i < annotationArray.length; i++) {
                 //校验里面是否有param注解
                 Annotation[] annotations = annotationArray[i];
                 paramNames[i] = null;
-                for(Annotation annotation : annotations){
-                    if(QueryParam.class.isAssignableFrom(annotation.annotationType())){
+                for (Annotation annotation : annotations) {
+                    if (QueryParam.class.isAssignableFrom(annotation.annotationType())) {
                         paramNames[i] = ((QueryParam) annotation).value();
                         break;
-                    }else if(FormParam.class.isAssignableFrom(annotation.annotationType())){
+                    } else if (FormParam.class.isAssignableFrom(annotation.annotationType())) {
                         paramNames[i] = ((FormParam) annotation).value();
                         break;
-                    }else if(PostParam.class.isAssignableFrom(annotation.annotationType())){
+                    } else if (PostParam.class.isAssignableFrom(annotation.annotationType())) {
                         paramNames[i] = ((PostParam) annotation).value();
                         break;
                     }
                 }
-                if(paramNames[i] == null){
+                if (paramNames[i] == null) {
                     paramNames[i] = "";
                 }
             }
 
             ParameterWrapper[] parameters = new ParameterWrapper[paramNames.length];
-            for(int i=0;i<paramNames.length;i++){
+            for (int i = 0; i < paramNames.length; i++) {
                 parameters[i] = new ParameterWrapper(
                         method.getParameterTypes()[i], paramNames[i],
                         method.getGenericParameterTypes()[i], annotationArray[i]);
@@ -237,15 +244,16 @@ public class HttpApiService {
 
         /**
          * 取注解上面的header
+         *
          * @param anno
          * @return
          */
-        private Map<String, String> getHeaders(HttpApi anno){
+        private Map<String, String> getHeaders(HttpApi anno) {
             Map<String, String> headers = new HashMap<>();
             Header[] headersAnno = anno.headers();
-            if(!CommonUtils.isArrayEmpty(headersAnno)){
-                for(Header header : headersAnno){
-                    if(header != null){
+            if (!CommonUtils.isArrayEmpty(headersAnno)) {
+                for (Header header : headersAnno) {
+                    if (header != null) {
                         headers.put(header.key(), header.value());
                     }
                 }

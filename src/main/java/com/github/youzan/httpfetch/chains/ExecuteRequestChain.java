@@ -26,12 +26,12 @@ public class ExecuteRequestChain implements HttpApiChain {
     public HttpResult doChain(HttpApiInvoker invoker, Invocation invocation) {
         HttpApiMethodWrapper wrapper = invocation.getWrapper();
         HttpApiRequestParam requestParam = invocation.getRequestParam();
-        if(LOGGER.isInfoEnabled()){
-            LOGGER.info("调用开始,请求参数:"+ JSON.toJSONString(requestParam));
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("调用开始,请求参数:" + JSON.toJSONString(requestParam) + "body:" + new String(requestParam.getRequestBody()));
         }
-        try{
+        try {
             return this.request(requestParam, wrapper);
-        }catch (Exception e){
+        } catch (Exception e) {
             LOGGER.error("请求调用时发生异常! method [{}] requestParam [{}]", invocation.getMethod(), JSON.toJSONString(requestParam), e);
             HttpResult httpResult = new HttpResult();
             httpResult.setException(e);
@@ -41,7 +41,6 @@ public class ExecuteRequestChain implements HttpApiChain {
 
 
     /**
-     *
      * @param requestParam
      * @return
      * @throws IOException
@@ -57,7 +56,8 @@ public class ExecuteRequestChain implements HttpApiChain {
         String encoding = requestParam.getEncoding();
         Integer timeout = wrapper.getTimeout();
         Integer readTimeout = wrapper.getReadTimeout();
-        try{
+        Integer retry = wrapper.getRetry();
+        try {
             if (formParam == null || formParam.isEmpty()) {
                 //没有文件上传的form
                 //作为url后缀
@@ -73,7 +73,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                     //将参数作为二进制流传递
                     body = postParamUrl.getBytes();
                 }
-            }else{
+            } else {
                 formParam.putAll(postParam);
 
                 //如果需要则写道body流中
@@ -86,17 +86,29 @@ public class ExecuteRequestChain implements HttpApiChain {
 
                 body = baos.toByteArray();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             LOGGER.error("发起POST请求时出错! url [{}]", url, e);
             throw new RuntimeException("发起请求时出错!", e);
         }
 
-        return request(url, method, getParam, body, headers, encoding, timeout, readTimeout);
+        HttpResult httpResult = null;
+        while(retry>=0) {
+            try {
+                httpResult = request(url, method, getParam, body, headers, encoding, timeout, readTimeout, retry);
+            } catch (SocketTimeoutException | ConnectException  e) {
+                if (retry > 0) {
+                    LOGGER.info("超时重试:" + e.toString());
+                }
+            }
+
+            retry--;
+        }
+        return httpResult;
     }
 
     /**
      * @param url         地址
-     * @param method GET、POST、DELETE、INPUT等http提供的功能
+     * @param method      GET、POST、DELETE、INPUT等http提供的功能
      * @param getParam    参数,始终做get参数传递
      * @param body        输出流的字节
      * @param headers     头
@@ -106,7 +118,7 @@ public class ExecuteRequestChain implements HttpApiChain {
      */
     private HttpResult request(StringBuffer url, String method, Map<String, String> getParam,
                                byte[] body, Map<String, String> headers, String encoding,
-                               Integer timeout, Integer readTimeout) {
+                               Integer timeout, Integer readTimeout, Integer retry) throws SocketTimeoutException, ConnectException{
 
 
         if (CommonUtils.isStringEmpty(url)) {
@@ -141,11 +153,11 @@ public class ExecuteRequestChain implements HttpApiChain {
 
             if (headers != null && !headers.isEmpty()) {
                 Iterator<Map.Entry<String, String>> entryIterator = headers.entrySet().iterator();
-                while(entryIterator.hasNext()){
+                while (entryIterator.hasNext()) {
                     Map.Entry<String, String> entry = entryIterator.next();
                     conn.addRequestProperty(entry.getKey(), entry.getValue());
                 }
-                if(LOGGER.isDebugEnabled()){
+                if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("request http! header [{}]", JSON.toJSONString(conn.getRequestProperties()));
                 }
             }
@@ -162,15 +174,17 @@ public class ExecuteRequestChain implements HttpApiChain {
             if (!CommonUtils.isArrayEmpty(body)) {
                 //如果需要则写道body流中
                 conn.setDoOutput(true);
-
                 os = conn.getOutputStream();
                 os.write(body);
+                os.flush();
                 os.close();
             }
 
             long time = System.currentTimeMillis();
-            if (conn.getResponseCode() == 200) {
-                //成功 取stream
+
+            int resCode = conn.getResponseCode();
+
+            if (resCode == 200) {
                 is = conn.getInputStream();
             } else {
                 is = conn.getErrorStream();
@@ -187,9 +201,11 @@ public class ExecuteRequestChain implements HttpApiChain {
             result.setStatusCode(conn.getResponseCode());
             result.setData(baos.toByteArray());
             LOGGER.info("调用结果!,url [{}] rt[{}] result [{}]",
-                    url, System.currentTimeMillis()-time, baos.toString());
+                    url, System.currentTimeMillis() - time, baos.toString());
 
             return result;
+        } catch (java.net.SocketTimeoutException e) {
+            throw e;
         } catch (Exception e) {
             LOGGER.error("发起请求时出错! url [{}]", url, e);
             throw new RuntimeException("发起请求时出错!", e);
@@ -225,7 +241,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                     paramUrl.append(value);
                 }
             }
-            if(paramUrl.length() > 0){
+            if (paramUrl.length() > 0) {
                 paramUrl.deleteCharAt(0);
             }
             return paramUrl.toString();
@@ -233,14 +249,14 @@ public class ExecuteRequestChain implements HttpApiChain {
         return "";
     }
 
-    private void writeWithFormParams( Map<String, Object> formParam, String boundary, String encoding, ByteArrayOutputStream os) throws IOException {
+    private void writeWithFormParams(Map<String, Object> formParam, String boundary, String encoding, ByteArrayOutputStream os) throws IOException {
         Iterator<Map.Entry<String, Object>> iterator = formParam.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, Object> entry = iterator.next();
             String name = entry.getKey();
             Object value = entry.getValue();
             if (!CommonUtils.isStringEmpty(name)) {
-                if(value instanceof File) {
+                if (value instanceof File) {
                     File file = (File) value;
                     writeBytes("--" + boundary + "\r\n", encoding, os);
                     writeBytes("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + URLEncoder.encode(file.getName(), encoding) + "\"\r\n", encoding, os);
@@ -248,13 +264,13 @@ public class ExecuteRequestChain implements HttpApiChain {
                     writeBytes("\r\n", encoding, os);
                     writeBytes(file, os);
                     writeBytes("\r\n", encoding, os);
-                }else if(value instanceof URL){
-                    URL url = (URL)value;
+                } else if (value instanceof URL) {
+                    URL url = (URL) value;
                     writeBytes("--" + boundary + "\r\n", encoding, os);
                     String fileName;
-                    if(url.getFile().lastIndexOf("/")+1 < url.getFile().length()){
-                        fileName = url.getFile().substring(url.getFile().lastIndexOf("/")+1);
-                    }else{
+                    if (url.getFile().lastIndexOf("/") + 1 < url.getFile().length()) {
+                        fileName = url.getFile().substring(url.getFile().lastIndexOf("/") + 1);
+                    } else {
                         fileName = "";
                     }
                     writeBytes("Content-Disposition: form-data; name=\"" + name + "\"; filename=\"" + URLEncoder.encode(fileName, encoding) + "\"\r\n", encoding, os);
@@ -262,9 +278,9 @@ public class ExecuteRequestChain implements HttpApiChain {
                     writeBytes("\r\n", encoding, os);
                     writeBytes(url, os);
                     writeBytes("\r\n", encoding, os);
-                }else if(value instanceof ImageParam){
-                    ImageParam imageParam = (ImageParam)value;
-                    if(imageParam.getImage() == null){
+                } else if (value instanceof ImageParam) {
+                    ImageParam imageParam = (ImageParam) value;
+                    if (imageParam.getImage() == null) {
                         throw new IllegalArgumentException("the parameter image is null");
                     }
                     writeBytes("--" + boundary + "\r\n", encoding, os);
@@ -274,7 +290,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                     writeBytes("\r\n", encoding, os);
                     writeBytes(imageParam.getImage(), imageName, os);
                     writeBytes("\r\n", encoding, os);
-                }else{
+                } else {
                     writeBytes("--" + boundary + "\r\n", encoding, os);
                     writeBytes("Content-Disposition: form-data; name=\"" + name + "\"\r\n", encoding, os);
                     writeBytes("Content-Type: text/plain; charset=" + encoding + "\r\n", encoding, os);
@@ -287,7 +303,7 @@ public class ExecuteRequestChain implements HttpApiChain {
     }
 
     private void writeBytes(BufferedImage image, String imageName, ByteArrayOutputStream os) throws IOException {
-        String formatName = imageName.substring(imageName.lastIndexOf(".")+1);
+        String formatName = imageName.substring(imageName.lastIndexOf(".") + 1);
         ImageIO.write(image, formatName.toUpperCase(), os);
     }
 
@@ -311,7 +327,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                 try {
                     fis.close();
                 } catch (IOException e) {
-                    String msg = "文件流关闭失败! fileName ["+content.getName()+"]";
+                    String msg = "文件流关闭失败! fileName [" + content.getName() + "]";
                     throw new RuntimeException(msg);
                 }
             }
@@ -336,7 +352,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                 try {
                     is.close();
                 } catch (IOException e) {
-                    String msg = "文件流关闭失败! fileName ["+url.getFile()+"]";
+                    String msg = "文件流关闭失败! fileName [" + url.getFile() + "]";
                     throw new RuntimeException(msg);
                 }
             }
