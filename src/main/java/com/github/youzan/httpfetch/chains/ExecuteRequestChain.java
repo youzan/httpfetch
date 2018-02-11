@@ -27,7 +27,7 @@ public class ExecuteRequestChain implements HttpApiChain {
         HttpApiMethodWrapper wrapper = invocation.getWrapper();
         HttpApiRequestParam requestParam = invocation.getRequestParam();
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("调用开始,请求参数:", "request:", JSON.toJSONString(requestParam), "body:", new String(requestParam.getRequestBody()));
+            LOGGER.info("调用开始,请求参数:{} body: {}", JSON.toJSONString(requestParam), new String(requestParam.getRequestBody()));
         }
         try {
             return this.request(requestParam, wrapper);
@@ -101,7 +101,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                 break;
             } catch (SocketTimeoutException | ConnectException e) {
                 if (retry > 0) {
-                    LOGGER.info("超时重试:", "异常原因：", e.toString(), "次数:" + retryTime);
+                    LOGGER.info("超时重试:{}, 重试次数:{}", e.toString(), retryTime);
                 } else {
                     throw e;
                 }
