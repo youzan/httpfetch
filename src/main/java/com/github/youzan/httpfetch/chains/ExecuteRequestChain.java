@@ -27,7 +27,7 @@ public class ExecuteRequestChain implements HttpApiChain {
         HttpApiMethodWrapper wrapper = invocation.getWrapper();
         HttpApiRequestParam requestParam = invocation.getRequestParam();
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("调用开始,请求参数:" + JSON.toJSONString(requestParam) + "body:" + new String(requestParam.getRequestBody()));
+            LOGGER.info("调用开始,请求参数:", "request:", JSON.toJSONString(requestParam), "body:", new String(requestParam.getRequestBody()));
         }
         try {
             return this.request(requestParam, wrapper);
@@ -45,7 +45,7 @@ public class ExecuteRequestChain implements HttpApiChain {
      * @return
      * @throws IOException
      */
-    private HttpResult request(HttpApiRequestParam requestParam, HttpApiMethodWrapper wrapper) {
+    private HttpResult request(HttpApiRequestParam requestParam, HttpApiMethodWrapper wrapper) throws Exception {
         StringBuffer url = new StringBuffer(requestParam.getUrl());
         String method = wrapper.getMethod();
         Map<String, String> getParam = requestParam.getGetParam();
@@ -92,15 +92,21 @@ public class ExecuteRequestChain implements HttpApiChain {
         }
 
         HttpResult httpResult = null;
-        while(retry>=0) {
+        //记录重试次数
+        int retryTime = 0;
+        while (retry >= 0) {
             try {
                 httpResult = request(url, method, getParam, body, headers, encoding, timeout, readTimeout, retry);
-            } catch (SocketTimeoutException | ConnectException  e) {
+                //成功直接返回
+                break;
+            } catch (SocketTimeoutException | ConnectException e) {
                 if (retry > 0) {
-                    LOGGER.info("超时重试:" + e.toString());
+                    LOGGER.info("超时重试:", "异常原因：", e.toString(), "次数:" + retryTime);
+                } else {
+                    throw e;
                 }
             }
-
+            retryTime++;
             retry--;
         }
         return httpResult;
@@ -118,7 +124,7 @@ public class ExecuteRequestChain implements HttpApiChain {
      */
     private HttpResult request(StringBuffer url, String method, Map<String, String> getParam,
                                byte[] body, Map<String, String> headers, String encoding,
-                               Integer timeout, Integer readTimeout, Integer retry) throws SocketTimeoutException, ConnectException{
+                               Integer timeout, Integer readTimeout, Integer retry) throws SocketTimeoutException, ConnectException {
 
 
         if (CommonUtils.isStringEmpty(url)) {
