@@ -1,9 +1,18 @@
 package com.github.youzan.httpfetch.mbostock.api;
 
 import com.github.youzan.httpfetch.BaseTest;
+import com.github.youzan.httpfetch.mbostock.vo.MiserablesVo;
 import com.github.youzan.httpfetch.mbostock.vo.UsCongressResponseVo;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Map;
 
 /**
  * Created by daiqiang on 17/6/8.
@@ -15,27 +24,17 @@ public class MbostockApiTest extends BaseTest {
 
     @Test
     public void test(){
-        UsCongressResponseVo responseVo = mbostockApi.getUsCongress();
-        System.out.println("type=="+responseVo.getType());
-        System.out.println("arcs->size=="+responseVo.getArcs().size());
-        System.out.println("objects->districts->bbox->size=="+responseVo.getObjects().getDistricts().getBbox().size());
-        System.out.println("objects->districts->type=="+responseVo.getObjects().getDistricts().getType());
-        System.out.println("objects->districts->geometries->size=="+responseVo.getObjects().getDistricts().getGeometries().size());
-        System.out.println("transform->scale=="+responseVo.getTransform().getScale());
-        System.out.println("transform->translate=="+responseVo.getTransform().getTranslate());
+        MiserablesVo responseVo = mbostockApi.miserables();
+        System.out.println("links=="+responseVo.getLinks());
+        System.out.println("links->size=="+responseVo.getLinks().size());
     }
 
     @Test
     public void test_url_param(){
-        String url = "https://bl.ocks.org/mbostock/raw/4090846/us-congress-113.json";
-        UsCongressResponseVo responseVo = mbostockApi.getUsCongress(url);
-        System.out.println("type=="+responseVo.getType());
-        System.out.println("arcs->size=="+responseVo.getArcs().size());
-        System.out.println("objects->districts->bbox->size=="+responseVo.getObjects().getDistricts().getBbox().size());
-        System.out.println("objects->districts->type=="+responseVo.getObjects().getDistricts().getType());
-        System.out.println("objects->districts->geometries->size=="+responseVo.getObjects().getDistricts().getGeometries().size());
-        System.out.println("transform->scale=="+responseVo.getTransform().getScale());
-        System.out.println("transform->translate=="+responseVo.getTransform().getTranslate());
+        String url = "https://bl.ocks.org/mbostock/raw/4600693/miserables.json";
+        MiserablesVo responseVo = mbostockApi.miserables(url);
+        System.out.println("links=="+responseVo.getLinks());
+        System.out.println("links->size=="+responseVo.getLinks().size());
     }
 
 }
