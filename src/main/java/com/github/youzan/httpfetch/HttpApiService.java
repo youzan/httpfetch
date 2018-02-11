@@ -191,9 +191,12 @@ public class HttpApiService {
                 if (httpApiAnno.readTimeout() > 0) {
                     wrapper.setReadTimeout(httpApiAnno.readTimeout());
                 }
-                if (httpApiAnno.retry() > 0) {
-                    wrapper.setRetry(httpApiAnno.retry());
-                }
+
+                //重试次数
+                wrapper.setRetry(httpApiAnno.retry());
+                //获取重试判断类
+                wrapper.setRetryCheckerClazz(httpApiAnno.retryChecker());
+
                 methodsCache.put(method, wrapper);
             }
             return wrapper;

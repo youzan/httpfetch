@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.github.youzan.httpfetch.*;
 import com.github.youzan.httpfetch.*;
 import com.github.youzan.httpfetch.resolver.ImageParam;
+import com.github.youzan.httpfetch.retry.RetryChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,8 +27,9 @@ public class ExecuteRequestChain implements HttpApiChain {
     public HttpResult doChain(HttpApiInvoker invoker, Invocation invocation) {
         HttpApiMethodWrapper wrapper = invocation.getWrapper();
         HttpApiRequestParam requestParam = invocation.getRequestParam();
-        if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("调用开始,请求参数:{} body: {}", JSON.toJSONString(requestParam), new String(requestParam.getRequestBody()));
+        if (LOGGER.isDebugEnabled()) {
+            String body = requestParam.getRequestBody() != null ? new String(requestParam.getRequestBody()) : null;
+            LOGGER.debug("调用开始,请求参数:{} body: {}", JSON.toJSONString(requestParam), body);
         }
         try {
             return this.request(requestParam, wrapper);
@@ -57,6 +59,7 @@ public class ExecuteRequestChain implements HttpApiChain {
         Integer timeout = wrapper.getTimeout();
         Integer readTimeout = wrapper.getReadTimeout();
         Integer retry = wrapper.getRetry();
+        Class<? extends RetryChecker> retryCheckerClazz = wrapper.getRetryCheckerClazz();
         try {
             if (formParam == null || formParam.isEmpty()) {
                 //没有文件上传的form
@@ -92,22 +95,39 @@ public class ExecuteRequestChain implements HttpApiChain {
         }
 
         HttpResult httpResult = null;
+        RetryChecker retryChecker = null;
         //记录重试次数
-        int retryTime = 0;
-        while (retry >= 0) {
-            try {
-                httpResult = request(url, method, getParam, body, headers, encoding, timeout, readTimeout, retry);
-                //成功直接返回
-                break;
-            } catch (SocketTimeoutException | ConnectException e) {
-                if (retry > 0) {
-                    LOGGER.info("超时重试:{}, 重试次数:{}", e.toString(), retryTime);
-                } else {
-                    throw e;
+        int maxRetry = retry;
+        while (true) {
+            httpResult = request(url, method, getParam, body, headers, encoding, timeout, readTimeout);
+            if(retry > 0){
+                //校验重试判断类
+                if(retryCheckerClazz == null){
+                    throw new RuntimeException("cannot find the retry checker!");
                 }
+                //校验是否重试
+                if(retryChecker == null){
+                    try {
+                        retryChecker = retryCheckerClazz.newInstance();
+                    } catch (Exception e) {
+                        LOGGER.error("create retry checker occur error! retryCheckerClazz [{}] ", retryCheckerClazz, e);
+                        throw new RuntimeException("create retry checker occur error! ", e);
+                    }
+                }
+                try{
+                    if(!retryChecker.needRetry(httpResult, maxRetry-retry+1, retry-1)){
+                        //不需要重试 跳出循环
+                        break;
+                    }
+                }catch (Exception e){
+                    //如果重试校验异常了，继续重试，异常吞掉
+                    LOGGER.warn("do retry check occur error!", e);
+                }
+            }else{
+                break;
             }
-            retryTime++;
-            retry--;
+
+            retry--;//重试次数递减
         }
         return httpResult;
     }
@@ -124,8 +144,9 @@ public class ExecuteRequestChain implements HttpApiChain {
      */
     private HttpResult request(StringBuffer url, String method, Map<String, String> getParam,
                                byte[] body, Map<String, String> headers, String encoding,
-                               Integer timeout, Integer readTimeout, Integer retry) throws SocketTimeoutException, ConnectException {
+                               Integer timeout, Integer readTimeout) {
 
+        HttpResult result = new HttpResult();
 
         if (CommonUtils.isStringEmpty(url)) {
             throw new IllegalArgumentException("参数url为空!");
@@ -203,18 +224,14 @@ public class ExecuteRequestChain implements HttpApiChain {
                 baos.write(b, 0, len);
             }
             is.close();
-            HttpResult result = new HttpResult();
             result.setStatusCode(conn.getResponseCode());
             result.setData(baos.toByteArray());
             LOGGER.info("调用结果!,url [{}] rt[{}] result [{}]",
-                    url, System.currentTimeMillis() - time, baos.toString());
-
-            return result;
-        } catch (java.net.SocketTimeoutException e) {
-            throw e;
+                    url, System.currentTimeMillis()-time, baos.toString());
         } catch (Exception e) {
             LOGGER.error("发起请求时出错! url [{}]", url, e);
-            throw new RuntimeException("发起请求时出错!", e);
+            //保存异常
+            result.setException(e);
         } finally {
             if (is != null) {
                 try {
@@ -231,6 +248,7 @@ public class ExecuteRequestChain implements HttpApiChain {
                 }
             }
         }
+        return result;
     }
 
     private String convertMap2UrlParam(Map<String, String> params, String encoding, boolean needEncode) throws UnsupportedEncodingException {
