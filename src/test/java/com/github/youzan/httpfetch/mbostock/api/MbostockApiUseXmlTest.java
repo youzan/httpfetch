@@ -4,6 +4,7 @@ import com.github.youzan.httpfetch.HttpApiConfiguration;
 import com.github.youzan.httpfetch.HttpApiService;
 import com.github.youzan.httpfetch.SourceReader;
 import com.github.youzan.httpfetch.XmlReader;
+import com.github.youzan.httpfetch.mbostock.vo.MiserablesVo;
 import com.github.youzan.httpfetch.mbostock.vo.UsCongressResponseVo;
 import org.junit.Test;
 
@@ -20,21 +21,29 @@ public class MbostockApiUseXmlTest {
 
         HttpApiConfiguration configuration = new HttpApiConfiguration();
         configuration.setSourceReaders(Arrays.asList(xmlReader));
-        configuration.init();
 
         HttpApiService service = new HttpApiService(configuration);
         service.init();
 
         MbostockApi mbostockApi = service.getOrCreateService(MbostockApi.class);
 
-        UsCongressResponseVo responseVo = mbostockApi.getUsCongress();
-        System.out.println("type=="+responseVo.getType());
-        System.out.println("arcs->size=="+responseVo.getArcs().size());
-        System.out.println("objects->districts->bbox->size=="+responseVo.getObjects().getDistricts().getBbox().size());
-        System.out.println("objects->districts->type=="+responseVo.getObjects().getDistricts().getType());
-        System.out.println("objects->districts->geometries->size=="+responseVo.getObjects().getDistricts().getGeometries().size());
-        System.out.println("transform->scale=="+responseVo.getTransform().getScale());
-        System.out.println("transform->translate=="+responseVo.getTransform().getTranslate());
+        String url = "https://bl.ocks.org/mbostock/raw/4600693/miserables.json";
+        MiserablesVo responseVo = mbostockApi.miserables(url);
+        System.out.println("links=="+responseVo.getLinks());
+        System.out.println("links->size=="+responseVo.getLinks().size());
+    }
+
+    @Test
+    public void test_no_xml() {
+        HttpApiService service = new HttpApiService(new HttpApiConfiguration());
+        service.init();
+
+        MbostockApi mbostockApi = service.getOrCreateService(MbostockApi.class);
+
+        String url = "https://bl.ocks.org/mbostock/raw/4600693/miserables.json";
+        MiserablesVo responseVo = mbostockApi.miserables(url);
+        System.out.println("links=="+responseVo.getLinks());
+        System.out.println("links->size=="+responseVo.getLinks().size());
     }
 
 }

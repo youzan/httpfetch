@@ -50,7 +50,7 @@ public interface BookWormHttpApi {
     @BookWormApi
     UploadFileResponseVo uploadFile(@BeanParam @FormParam UploadFileRequestVo requestVo);
 
-    @HttpApi(timeout = 2000, url = "http://bookworm365.com/checkHeader")
+    @HttpApi(timeout = 35, url = "http://bookworm365.com/checkHeader", retry = 10)
     @BookWormApi
     String checkHeader();
 

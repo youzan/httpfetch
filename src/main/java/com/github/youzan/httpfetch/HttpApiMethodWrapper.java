@@ -1,6 +1,7 @@
 package com.github.youzan.httpfetch;
 
 import com.github.youzan.httpfetch.convertor.ResponseGeneratorConvertor;
+import com.github.youzan.httpfetch.retry.RetryChecker;
 
 import java.lang.annotation.Annotation;
 import java.util.Map;
@@ -47,7 +48,15 @@ public class HttpApiMethodWrapper {
 
 	private String encoding;
 
+	/**
+	 * 重试次数
+	 */
 	private Integer retry;
+
+	/**
+	 * 重试校验类
+	 */
+	private Class<? extends RetryChecker> retryCheckerClazz;
 
 	public ParameterWrapper[] getParameters() {
 		return parameters;
@@ -146,5 +155,13 @@ public class HttpApiMethodWrapper {
 
 	public Integer getRetry(){
 		return this.retry;
+	}
+
+	public Class<? extends RetryChecker> getRetryCheckerClazz() {
+		return retryCheckerClazz;
+	}
+
+	public void setRetryCheckerClazz(Class<? extends RetryChecker> retryCheckerClazz) {
+		this.retryCheckerClazz = retryCheckerClazz;
 	}
 }

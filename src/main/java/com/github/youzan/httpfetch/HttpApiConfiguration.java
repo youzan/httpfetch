@@ -42,7 +42,7 @@ public class HttpApiConfiguration {
         parameterResolvers = new ArrayList<>();
         urlAlias = new HashMap<>();
 
-        if (!sourceReaders.isEmpty()) {
+        if (sourceReaders != null && !sourceReaders.isEmpty()) {
             for (SourceReader reader : sourceReaders) {
                 if (reader != null) {
                     if (reader.getChains() != null) {
