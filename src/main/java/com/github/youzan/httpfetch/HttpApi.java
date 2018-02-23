@@ -1,7 +1,7 @@
 package com.github.youzan.httpfetch;
 
-import com.github.youzan.httpfetch.retry.ConnectFailureRetryChecker;
-import com.github.youzan.httpfetch.retry.RetryChecker;
+import com.github.youzan.httpfetch.retry.ConnectFailureRetryPolicy;
+import com.github.youzan.httpfetch.retry.RetryPolicy;
 
 import java.lang.annotation.*;
 
@@ -67,6 +67,6 @@ public @interface HttpApi {
 	 * 重试次数
 	 * @return
 	 */
-	Class<? extends RetryChecker> retryChecker() default ConnectFailureRetryChecker.class;
+	Class<? extends RetryPolicy> retryPolicy() default ConnectFailureRetryPolicy.class;
 
 }

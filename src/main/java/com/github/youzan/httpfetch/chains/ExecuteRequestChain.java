@@ -2,9 +2,8 @@ package com.github.youzan.httpfetch.chains;
 
 import com.alibaba.fastjson.JSON;
 import com.github.youzan.httpfetch.*;
-import com.github.youzan.httpfetch.*;
 import com.github.youzan.httpfetch.resolver.ImageParam;
-import com.github.youzan.httpfetch.retry.RetryChecker;
+import com.github.youzan.httpfetch.retry.RetryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +58,7 @@ public class ExecuteRequestChain implements HttpApiChain {
         Integer timeout = wrapper.getTimeout();
         Integer readTimeout = wrapper.getReadTimeout();
         Integer retry = wrapper.getRetry();
-        Class<? extends RetryChecker> retryCheckerClazz = wrapper.getRetryCheckerClazz();
+        Class<? extends RetryPolicy> retryPolicyClazz = wrapper.getRetryPolicyClazz();
         try {
             if (formParam == null || formParam.isEmpty()) {
                 //没有文件上传的form
@@ -95,27 +94,27 @@ public class ExecuteRequestChain implements HttpApiChain {
         }
 
         HttpResult httpResult = null;
-        RetryChecker retryChecker = null;
+        RetryPolicy retryPolicy = null;
         //记录重试次数
         int maxRetry = retry;
         while (true) {
             httpResult = request(url, method, getParam, body, headers, encoding, timeout, readTimeout);
             if(retry > 0){
                 //校验重试判断类
-                if(retryCheckerClazz == null){
+                if(retryPolicyClazz == null){
                     throw new RuntimeException("cannot find the retry checker!");
                 }
                 //校验是否重试
-                if(retryChecker == null){
+                if(retryPolicy == null){
                     try {
-                        retryChecker = retryCheckerClazz.newInstance();
+                        retryPolicy = retryPolicyClazz.newInstance();
                     } catch (Exception e) {
-                        LOGGER.error("create retry checker occur error! retryCheckerClazz [{}] ", retryCheckerClazz, e);
+                        LOGGER.error("create retry checker occur error! retryPolicyClazz [{}] ", retryPolicyClazz, e);
                         throw new RuntimeException("create retry checker occur error! ", e);
                     }
                 }
                 try{
-                    if(!retryChecker.needRetry(httpResult, maxRetry-retry+1, retry-1)){
+                    if(!retryPolicy.needRetry(httpResult, maxRetry-retry+1, retry-1)){
                         //不需要重试 跳出循环
                         break;
                     }

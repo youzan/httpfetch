@@ -5,7 +5,7 @@ import com.github.youzan.httpfetch.HttpResult;
 /**
  * 重试校验接口
  */
-public interface RetryChecker {
+public interface RetryPolicy {
 
     /**
      *

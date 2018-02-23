@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 
-public class ConnectFailureRetryChecker implements RetryChecker {
+public class ConnectFailureRetryPolicy implements RetryPolicy {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectFailureRetryChecker.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectFailureRetryPolicy.class);
 
     /**
      * 如果是网络异常则重试

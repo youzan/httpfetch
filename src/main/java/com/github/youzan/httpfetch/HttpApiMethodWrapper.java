@@ -1,7 +1,7 @@
 package com.github.youzan.httpfetch;
 
 import com.github.youzan.httpfetch.convertor.ResponseGeneratorConvertor;
-import com.github.youzan.httpfetch.retry.RetryChecker;
+import com.github.youzan.httpfetch.retry.RetryPolicy;
 
 import java.lang.annotation.Annotation;
 import java.util.Map;
@@ -56,7 +56,7 @@ public class HttpApiMethodWrapper {
 	/**
 	 * 重试校验类
 	 */
-	private Class<? extends RetryChecker> retryCheckerClazz;
+	private Class<? extends RetryPolicy> retryPolicyClazz;
 
 	public ParameterWrapper[] getParameters() {
 		return parameters;
@@ -157,11 +157,11 @@ public class HttpApiMethodWrapper {
 		return this.retry;
 	}
 
-	public Class<? extends RetryChecker> getRetryCheckerClazz() {
-		return retryCheckerClazz;
+	public Class<? extends RetryPolicy> getRetryPolicyClazz() {
+		return retryPolicyClazz;
 	}
 
-	public void setRetryCheckerClazz(Class<? extends RetryChecker> retryCheckerClazz) {
-		this.retryCheckerClazz = retryCheckerClazz;
+	public void setRetryPolicyClazz(Class<? extends RetryPolicy> retryPolicyClazz) {
+		this.retryPolicyClazz = retryPolicyClazz;
 	}
 }
