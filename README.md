@@ -36,6 +36,9 @@
 git clone https://github.com/youzan/httpfetch.git
 ```
 
+## QuickStart
+https://github.com/youzan/httpfetch/wiki/QuickStart
+
 ## 对象
 * ParameterResolver：api参数解析类，自带的可以对数组、bean、简单类型等参数进行解析并封装成Get、Post、Form等类型请求的参数。也可以通过Url注解灵活定义api接口的请求地址。
 * Convertor：返回数据封装类，自带的仅支持简单类型和JSON类型的数据进行封装。通过扩展可以实现更多的转换方式。
