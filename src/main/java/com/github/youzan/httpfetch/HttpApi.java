@@ -1,5 +1,6 @@
 package com.github.youzan.httpfetch;
 
+import com.github.youzan.httpfetch.parse.json.JsonPath;
 import com.github.youzan.httpfetch.retry.ConnectFailureRetryPolicy;
 import com.github.youzan.httpfetch.retry.RetryPolicy;
 
@@ -68,5 +69,17 @@ public @interface HttpApi {
 	 * @return
 	 */
 	Class<? extends RetryPolicy> retryPolicy() default ConnectFailureRetryPolicy.class;
+
+	/**
+	 * 用json解析返回结果
+	 * @return
+	 */
+	JsonPath jsonPath() default @JsonPath(path = "");
+
+	/**
+	 * 支持的convertor
+	 * @return
+	 */
+	String support() default "GENERATE";
 
 }
