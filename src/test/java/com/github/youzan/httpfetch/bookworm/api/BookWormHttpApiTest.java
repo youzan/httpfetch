@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.File;
 import java.net.URL;
 
+import static org.junit.Assert.*;
+
 /**
  * Created by daiqiang on 17/6/14.
  */
@@ -44,8 +46,13 @@ public class BookWormHttpApiTest extends BaseTest {
     }
 
     @Test
+    public void testRetryPolicyHeader() throws Exception {
+        assertEquals("true", bookWormHttpApi.checkRetryPolicy());
+    }
+
+    @Test
     public void testCheckHeader() throws Exception {
-        System.out.println(bookWormHttpApi.checkHeader());
+        assertEquals("true", bookWormHttpApi.checkHeader());
     }
 
 }

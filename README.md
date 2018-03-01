@@ -36,6 +36,9 @@
 git clone https://github.com/youzan/httpfetch.git
 ```
 
+## QuickStart
+https://github.com/youzan/httpfetch/wiki/QuickStart
+
 ## 对象
 * ParameterResolver：api参数解析类，自带的可以对数组、bean、简单类型等参数进行解析并封装成Get、Post、Form等类型请求的参数。也可以通过Url注解灵活定义api接口的请求地址。
 * Convertor：返回数据封装类，自带的仅支持简单类型和JSON类型的数据进行封装。通过扩展可以实现更多的转换方式。
@@ -400,6 +403,65 @@ public class ObjectsVo {
 @HttpApi(timeout = 1000, headers = {@Header(key="user-agent", value = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")})
     UsCongressResponseVo<TransformVo> getUsCongress();
 ```
+
+### 重试策略
+需要升级到1.2.0之后才可以使用。<br/>
+HttpApi注解中增加了retry和retryPolicy两个变量：<br/>
+  retry：重试次数；<br/>
+  retryPolicy：重试策略，默认为ConnectFailureRetryPolicy，超时和连接异常会进行重试；<br/>
+
+#### 自定义重试策略
+类图：
+![类图](http://img.blog.csdn.net/20180223235850203?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvd2hqMTk4NzA0MDY=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70)
+
+
+所有的重试策略需要继承RetryPolicy接口，并实现needRetry函数。
+
+``` java
+/** 
+ * 重试校验接口 
+ */  
+public interface RetryPolicy {  
+  
+    /** 
+     * 
+     * @param result http请求结果 
+     * @param retryTimes 重试次数 
+     * @param remainRetryTimes  剩余重试次数 
+     * @return 
+     */  
+    boolean needRetry(HttpResult result, int retryTimes, int remainRetryTimes);  
+  
+}  
+```
+
+ConnectFailureRetryPolicy：
+
+``` java
+public class ConnectFailureRetryPolicy implements RetryPolicy {  
+  
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectFailureRetryPolicy.class);  
+  
+    /** 
+     * 如果是网络异常则重试 
+     * @param result http请求结果 
+     * @param retryTimes 重试次数 
+     * @param remainRetryTimes  剩余重试次数 
+     * @return 
+     */  
+    @Override  
+    public boolean needRetry(HttpResult result, int retryTimes, int remainRetryTimes) {  
+        Exception e = result.getException();  
+        if(e instanceof SocketTimeoutException || e instanceof ConnectException){  
+            LOGGER.info("超时重试: {}, 重试次数: {} 剩余次数: {}", e, retryTimes, remainRetryTimes);  
+            return true;  
+        }  
+        return false;  
+    }  
+  
+}  
+```
+实现完自己的重试策略后，只需要在HttpApi注解中设置retryPolicy的值就可以了。
 
 更多示例可以在项目的`test`目录中查看
 

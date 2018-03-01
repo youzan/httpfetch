@@ -195,7 +195,7 @@ public class HttpApiService {
                 //重试次数
                 wrapper.setRetry(httpApiAnno.retry());
                 //获取重试判断类
-                wrapper.setRetryCheckerClazz(httpApiAnno.retryChecker());
+                wrapper.setRetryPolicyClazz(httpApiAnno.retryPolicy());
                 //使用jsonpath解析返回结果
                 wrapper.setJsonPath(httpApiAnno.jsonPath());
                 methodsCache.put(method, wrapper);
