@@ -65,7 +65,6 @@ public class HttpApiConfiguration {
         chains.add(new UrlWrapperChain(this));
         chains.add(new ParameterResolverChain(this));
         chains.add(new GenerateResponseChain(this));
-        //chains.add(new JsonParseHttpResultChain(this));
         chains.add(new ExecuteRequestChain());
 
         //默认参数解析类

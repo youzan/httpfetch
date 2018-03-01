@@ -74,12 +74,6 @@ public @interface HttpApi {
 	 * 用json解析返回结果
 	 * @return
 	 */
-	JsonPath jsonPath() default @JsonPath(path = "");
-
-	/**
-	 * 支持的convertor
-	 * @return
-	 */
-	String support() default "GENERATE";
+	JsonPath jsonPath() default @JsonPath("");
 
 }

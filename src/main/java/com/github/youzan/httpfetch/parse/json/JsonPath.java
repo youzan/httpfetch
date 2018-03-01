@@ -12,6 +12,6 @@ import java.lang.annotation.*;
 public @interface JsonPath {
 
     //json路径
-    String path();
+    String value();
     
 }
