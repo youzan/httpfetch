@@ -38,6 +38,18 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
             return false;
         }
         Object arg = requestParameter.getParameter();
+        byte[] bytes = parseBytes(parameterCls, arg);
+        if(bytes != null){
+            param.setRequestBody(bytes);
+        }
+        return false;
+    }
+
+    private byte[] parseBytes(Class<?> parameterCls, Object arg){
+        if(parameterCls.isArray()
+                && byte.class.isAssignableFrom(parameterCls.getComponentType())){
+            return (byte[])arg;
+        }
         String value;
         if(String.class.isAssignableFrom(parameterCls)){
             value = arg.toString();
@@ -45,9 +57,6 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
             value = String.valueOf(arg);
         }else{
             value = JSONObject.toJSONString(arg);
-        }
-        if(LOGGER.isInfoEnabled()){
-            LOGGER.info("请求中添加body!", "body" , value);
         }
         if(!CommonUtils.isStringEmpty(value)){
             byte[] body;
@@ -58,8 +67,9 @@ public class RequestBodyParameterResolver implements MethodParameterResolver {
                 LOGGER.error(msg, e);
                 throw new RuntimeException(msg, e);
             }
-            requestParameter.setParameter(body);
+            return body;
         }
-        return true;
+        return null;
     }
+
 }

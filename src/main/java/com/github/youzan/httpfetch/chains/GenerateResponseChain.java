@@ -37,7 +37,7 @@ public class GenerateResponseChain implements HttpApiChain {
         ResponseGeneratorConvertor service = wrapper.getGeneratorService();
         Class<?> responseCls = wrapper.getResponseCls();
         if(service != null){
-            return wrapper.getGeneratorService().generate(method, wrapper, requestParam, response, responseCls);
+            return service.generate(method, wrapper, requestParam, response, responseCls);
         }else{
             List<ResponseGeneratorConvertor> convertors = configuration.getConvertors();
             if(convertors != null){

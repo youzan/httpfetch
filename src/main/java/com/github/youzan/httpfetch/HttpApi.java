@@ -44,13 +44,13 @@ public @interface HttpApi {
 	 * 超时时间
 	 * @return
 	 */
-	int timeout();
+	int timeout() default 1000;
 
 	/**
 	 * 超时时间
 	 * @return
 	 */
-	int readTimeout() default  0;
+	int readTimeout() default  1000;
 
 	/**
 	 * 编码
