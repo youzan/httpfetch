@@ -1,14 +1,10 @@
 package com.github.youzan.httpfetch;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
@@ -65,7 +61,7 @@ public class ByteConvertorUtil {
             }else if(Map.class.isAssignableFrom(returnType)){
                 return JSONObject.parseObject(value);
             }else{
-                return JSONObject.parseObject(value, new ResponseTypeReference(method.getGenericReturnType()));
+                return JSONObject.parseObject(value, method.getGenericReturnType());
             }
         } catch (Exception e) {
             String msg = "读取请求结果时出错！";
