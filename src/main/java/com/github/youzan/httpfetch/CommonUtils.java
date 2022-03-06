@@ -1,5 +1,8 @@
 package com.github.youzan.httpfetch;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -150,4 +153,24 @@ public class CommonUtils {
         System.out.println(limit);
 
     }
+
+    /**
+     * 将对象转化成json string
+     * 由于原有的fastjson组件，转化string类型时会在外部增加一个引号，所以才增加了该方法
+     * @param arg
+     * @return
+     */
+    public static String formatObjectToJSONString(Object arg){
+        if(arg == null){
+            return null;
+        }
+        if(arg instanceof String){
+            return arg.toString();
+        }else if(arg.getClass().isPrimitive()){
+            return String.valueOf(arg);
+        }else{
+            return JSON.toJSONString(arg);
+        }
+    }
+
 }

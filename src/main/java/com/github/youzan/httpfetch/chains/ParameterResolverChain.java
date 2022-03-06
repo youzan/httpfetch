@@ -67,7 +67,6 @@ public class ParameterResolverChain implements HttpApiChain {
      * @return
      */
     private MethodParameterResolver choiseResolver(HttpApiMethodWrapper wrapper, RequestParameter requestParameter){
-        ParameterWrapper parameterWrapper = requestParameter.getParameterWrapper();
         //遍历已注册的入参处理类
         for(MethodParameterResolver parameterResolver : configuration.getParameterResolvers()){
             if(parameterResolver.supperts(wrapper, requestParameter)){

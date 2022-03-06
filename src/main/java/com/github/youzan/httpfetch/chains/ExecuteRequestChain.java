@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -225,6 +226,8 @@ public class ExecuteRequestChain implements HttpApiChain {
             is.close();
             result.setStatusCode(conn.getResponseCode());
             result.setData(baos.toByteArray());
+            Map<String,List<String>> responseHeaders = conn.getHeaderFields();
+            result.setHeaders(responseHeaders);
             LOGGER.info("调用结果!,url [{}] rt[{}] result [{}]",
                     url, System.currentTimeMillis()-time, baos.toString());
         } catch (Exception e) {

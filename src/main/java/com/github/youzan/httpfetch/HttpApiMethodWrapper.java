@@ -1,6 +1,7 @@
 package com.github.youzan.httpfetch;
 
 import com.github.youzan.httpfetch.convertor.ResponseGeneratorConvertor;
+import com.github.youzan.httpfetch.parse.json.JsonPath;
 import com.github.youzan.httpfetch.retry.RetryPolicy;
 
 import java.lang.annotation.Annotation;
@@ -57,6 +58,11 @@ public class HttpApiMethodWrapper {
 	 * 重试校验类
 	 */
 	private Class<? extends RetryPolicy> retryPolicyClazz;
+
+    /**
+     * 用json解析返回结果
+     */
+	private JsonPath jsonPath;
 
 	public ParameterWrapper[] getParameters() {
 		return parameters;
@@ -164,4 +170,12 @@ public class HttpApiMethodWrapper {
 	public void setRetryPolicyClazz(Class<? extends RetryPolicy> retryPolicyClazz) {
 		this.retryPolicyClazz = retryPolicyClazz;
 	}
+
+    public JsonPath getJsonPath() {
+        return jsonPath;
+    }
+
+    public void setJsonPath(JsonPath jsonPath) {
+        this.jsonPath = jsonPath;
+    }
 }

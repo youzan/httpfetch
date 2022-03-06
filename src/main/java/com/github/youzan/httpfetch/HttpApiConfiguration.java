@@ -1,10 +1,9 @@
 package com.github.youzan.httpfetch;
 
 import com.github.youzan.httpfetch.chains.*;
-import com.github.youzan.httpfetch.chains.*;
 import com.github.youzan.httpfetch.convertor.DefaultResponseGeneratorConvertor;
+import com.github.youzan.httpfetch.convertor.JsonPathConvertor;
 import com.github.youzan.httpfetch.convertor.ResponseGeneratorConvertor;
-import com.github.youzan.httpfetch.resolver.*;
 import com.github.youzan.httpfetch.resolver.*;
 
 import java.util.ArrayList;
@@ -75,6 +74,7 @@ public class HttpApiConfiguration {
         parameterResolvers.add(new DefaultMethodParameterResolver());
 
         //默认结果解析器
+        convertors.add(new JsonPathConvertor());
         convertors.add(new DefaultResponseGeneratorConvertor());
 
     }

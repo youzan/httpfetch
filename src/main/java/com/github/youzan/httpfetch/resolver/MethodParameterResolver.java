@@ -27,7 +27,7 @@ public interface MethodParameterResolver {
 	 * @return 是否添加到请求参数中 true 添加到http param  false 不添加到http param
 	 */
 	boolean resolveArgument(HttpApiRequestParam param,
-						 HttpApiMethodWrapper wrapper,
-						 RequestParameter requestParameter);
+                            HttpApiMethodWrapper wrapper,
+                            RequestParameter requestParameter);
 	
 }

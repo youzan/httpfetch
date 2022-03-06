@@ -54,7 +54,7 @@ public interface BookWormHttpApi {
     @BookWormApi
     String checkHeader();
 
-    @HttpApi(timeout = 40, url = "http://bookworm365.com/checkHeader", retry = 10)
+    @HttpApi(timeout = 35, url = "http://bookworm365.com/checkHeader", retry = 10)
     @BookWormApi
     String checkRetryPolicy();
 

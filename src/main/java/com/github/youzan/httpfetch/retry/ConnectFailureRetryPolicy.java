@@ -20,12 +20,10 @@ public class ConnectFailureRetryPolicy implements RetryPolicy {
      */
     @Override
     public boolean needRetry(HttpResult result, int retryTimes, int remainRetryTimes) {
-        if(result.getException() != null){
-            Exception e = result.getException();
-            if(SocketTimeoutException.class.isAssignableFrom(e.getClass()) || ConnectException.class.isAssignableFrom(e.getClass())){
-                LOGGER.info("超时重试: {}, 重试次数: {} 剩余次数: {}", e.toString(), retryTimes, remainRetryTimes);
-                return true;
-            }
+        Exception e = result.getException();
+        if(e instanceof SocketTimeoutException || e instanceof ConnectException){
+            LOGGER.info("超时重试: {}, 重试次数: {} 剩余次数: {}", e, retryTimes, remainRetryTimes);
+            return true;
         }
         return false;
     }
