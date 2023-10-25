@@ -1,7 +1,6 @@
 package com.github.youzan.httpfetch.chains;
 
 import com.github.youzan.httpfetch.*;
-import com.github.youzan.httpfetch.*;
 import com.github.youzan.httpfetch.convertor.ResponseGeneratorConvertor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +28,8 @@ public class GenerateResponseChain implements HttpApiChain {
             byte[] object = (byte[]) result.getData();
             Object returnObject = generateResponse(invocation.getMethod(), object, invocation.getRequestParam(), invocation.getWrapper());
             result.setData(returnObject);
+        }else{
+            throw new RequestException(result.getException());
         }
         return result;
     }

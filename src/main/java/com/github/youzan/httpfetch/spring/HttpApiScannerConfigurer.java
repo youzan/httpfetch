@@ -1,5 +1,6 @@
 package com.github.youzan.httpfetch.spring;
 
+import com.github.youzan.httpfetch.HttpApiService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -15,9 +16,11 @@ public class HttpApiScannerConfigurer implements BeanDefinitionRegistryPostProce
 
     private String basePackage;
 
+    private HttpApiService httpApiService;
+
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        HttpApiClassPathBeanDefinitionScanner scanner = new HttpApiClassPathBeanDefinitionScanner(registry);
+        HttpApiClassPathBeanDefinitionScanner scanner = new HttpApiClassPathBeanDefinitionScanner(registry, httpApiService);
         scanner.register();
         scanner.doScan(StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
     }
@@ -32,5 +35,13 @@ public class HttpApiScannerConfigurer implements BeanDefinitionRegistryPostProce
 
     public void setBasePackage(String basePackage) {
         this.basePackage = basePackage;
+    }
+
+    public HttpApiService getHttpApiService() {
+        return httpApiService;
+    }
+
+    public void setHttpApiService(HttpApiService httpApiService) {
+        this.httpApiService = httpApiService;
     }
 }

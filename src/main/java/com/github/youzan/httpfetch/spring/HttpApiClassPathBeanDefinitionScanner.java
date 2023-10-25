@@ -1,5 +1,6 @@
 package com.github.youzan.httpfetch.spring;
 
+import com.github.youzan.httpfetch.HttpApiService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
@@ -21,8 +22,11 @@ public class HttpApiClassPathBeanDefinitionScanner extends ClassPathBeanDefiniti
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpApiClassPathBeanDefinitionScanner.class);
 
-    public HttpApiClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry) {
+    private HttpApiService httpApiService;
+
+    public HttpApiClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry, HttpApiService httpApiService) {
         super(registry);
+        this.httpApiService = httpApiService;
     }
 
     public void register(){
@@ -43,6 +47,7 @@ public class HttpApiClassPathBeanDefinitionScanner extends ClassPathBeanDefiniti
             try {
                 Class<?> clazz = Class.forName(definition.getBeanClassName());
                 definition.getPropertyValues().add("targetClass", clazz);
+                definition.getPropertyValues().add("httpApiService", httpApiService);
                 definition.setBeanClass(HttpApiFactoryBean.class);
             } catch (ClassNotFoundException e) {
                 LOGGER.error("class not found! className [{}]", definition.getBeanClassName(), e);
