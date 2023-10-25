@@ -146,6 +146,8 @@ public class ExecuteRequestChain implements HttpApiChain {
                                byte[] body, Map<String, String> headers, String encoding,
                                Integer timeout, Integer readTimeout) {
 
+        url = new StringBuffer(url.toString());
+
         HttpResult result = new HttpResult();
 
         if (CommonUtils.isStringEmpty(url)) {

@@ -6,7 +6,7 @@
 
     <groupId>com.github.youzan</groupId>
     <artifactId>http-fetch</artifactId>
-    <version>1.2.3</version>
+    <version>1.2.9</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <url>https://github.com/youzan/httpfetch</url>
     <description>It's cool!</description>
